@@ -15,7 +15,9 @@ import scipy.signal as signal
 # src="/home/py/PycharmProjects/image_process/extract/000063.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000877.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000067.jpg"
-src="/home/py/PycharmProjects/image_process/extract/000150.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000150.jpg"
+src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000018.jpg"
 
 def hist_plt_plot(b,g,r):
     histImgB = cv2.calcHist([b],[0],None,[256],[1,256])
@@ -277,12 +279,17 @@ col_bd = col_bd[np.where(col_bd < col_li[-1])]
 
 # 高亮像素计数圈数字位置法
 vhigh = V
-vhigh[np.where(V < 130)] = 0
+vhigh[np.where(V < 140)] = 0
 row_sum = np.sum(vhigh,axis=1)
 col_sum = np.sum(vhigh,axis=0)
 
 row_bd = np.where(row_sum > 2200)[0]
 col_bd = np.where(col_sum > 800)[0]
+
+
+
+print(row_bd)
+print(col_bd)
 # plt.plot(row_sum,'b')
 # plt.plot(col_sum,'r')
 # plt.show()
@@ -497,13 +504,20 @@ peaks_line2 = np.concatenate((np.array([0]),peaks_line2,np.array([len(col_sum_li
 peaks_diff1 = np.diff(peaks_line1)
 peaks_diff2 = np.diff(peaks_line2)
 
+# 中位数做参考值
+diff_queue = np.append(peaks_diff1, peaks_diff2)
+mean_size = np.median(diff_queue)
 
+# 众数做参考值
+# counts = np.bincount(diff_queue)
+# mean_size = np.argmax(counts)
 
 trust1 = np.zeros(peaks_line1.shape)
 trust2 = np.zeros(peaks_line2.shape)
 
 num = 16
-mean_size = round(gray.shape[1]/num)
+# mean_size = round(gray.shape[1]/num)
+print('参考宽度：')
 print(mean_size)
 bias = 3
 
@@ -733,7 +747,7 @@ print('result status:')
 print(diff_status1)
 print(diff_status2)
 
-plt.plot(col_sum_line2d,'b')
+plt.plot(col_sum_line1d,'b')
 plt.show()
 
 
