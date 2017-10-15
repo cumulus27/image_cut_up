@@ -16,8 +16,10 @@ import scipy.signal as signal
 # src="/home/py/PycharmProjects/image_process/extract/000877.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000067.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000150.jpg"
-src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000018.jpg"
+src="/home/py/PycharmProjects/image_process/extract/000041.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000097.jpg"
 
 def hist_plt_plot(b,g,r):
     histImgB = cv2.calcHist([b],[0],None,[256],[1,256])
@@ -506,6 +508,8 @@ peaks_diff2 = np.diff(peaks_line2)
 
 # 中位数做参考值
 diff_queue = np.append(peaks_diff1, peaks_diff2)
+diff_queue = diff_queue[np.where(diff_queue > 8)]
+diff_queue = diff_queue[np.where(diff_queue < 16)]
 mean_size = np.median(diff_queue)
 
 # 众数做参考值
@@ -519,7 +523,8 @@ num = 16
 # mean_size = round(gray.shape[1]/num)
 print('参考宽度：')
 print(mean_size)
-bias = 3
+bias = round(mean_size*0.22)
+
 
 def get_diff_status(peaks_diff, mean_size, bias):
     sl = mean_size - bias
@@ -575,7 +580,7 @@ def handle_small_diff(trust, peaks_diff, diff_status, mean_size, bias):
     for i in range(n):
         if diff_status[i] == 1:
             if i < n-1 and diff_status[i+1] == 1:
-                if peaks_diff[i + 1] + peaks_diff[i] < mean_size + bias:
+                if peaks_diff[i + 1] + peaks_diff[i] < mean_size + bias+1:
                     peaks_diff[i + 1] = peaks_diff[i + 1] + peaks_diff[i]
                     peaks_diff[i] = 0
                     diff_status = get_diff_status(peaks_diff, mean_size, bias)
@@ -585,19 +590,19 @@ def handle_small_diff(trust, peaks_diff, diff_status, mean_size, bias):
                     peaks_diff[i] = peaks_diff[i - 1] + peaks_diff[i]
                     peaks_diff[i - 1] = 0
                     diff_status = get_diff_status(peaks_diff, mean_size, bias)
-                    trust[i - 1] = -1
+                    trust[i - 1] = -2
                 # peaks_diff[i] = 0
                 # trust[i] = -1
             elif i == 0 and peaks_diff[i + 1] + peaks_diff[i] < mean_size + bias:
                 peaks_diff[i + 1] = peaks_diff[i + 1] + peaks_diff[i]
                 peaks_diff[i] = 0
                 diff_status = get_diff_status(peaks_diff, mean_size, bias)
-                trust[i] = -1
+                trust[i] = -3
             elif i == 0 and peaks_diff[i] < bias + 1:
                 peaks_diff[i + 1] = peaks_diff[i + 1] + peaks_diff[i]
                 peaks_diff[i] = 0
                 diff_status = get_diff_status(peaks_diff, mean_size, bias)
-                trust[i] = -1
+                trust[i] = -4
             elif i > 0 and diff_status[i-1] == 0:
                 # print(diff_status[i])
                 # print(diff_status[i+1])
@@ -605,7 +610,7 @@ def handle_small_diff(trust, peaks_diff, diff_status, mean_size, bias):
                     peaks_diff[i + 1] = peaks_diff[i + 1] + peaks_diff[i]
                     peaks_diff[i] = 0
                     diff_status = get_diff_status(peaks_diff, mean_size, bias)
-                    trust[i] = -1
+                    trust[i] = -5
                 elif diff_status[i+1] == 0:
                     if diff_status[i] < bias + 1:
                         # 超小块噪声 直接归并到旁边
@@ -613,14 +618,14 @@ def handle_small_diff(trust, peaks_diff, diff_status, mean_size, bias):
                             peaks_diff[i + 1] = peaks_diff[i + 1] + peaks_diff[i]
                             peaks_diff[i] = 0
                             diff_status = get_diff_status(peaks_diff, mean_size, bias)
-                            trust[i] = -1
+                            trust[i] = -6
                         else:
                             peaks_diff[i] = peaks_diff[i - 1] + peaks_diff[i]
                             peaks_diff[i - 1] = 0
                             diff_status = get_diff_status(peaks_diff, mean_size, bias)
-                            trust[i - 1] = -1
+                            trust[i - 1] = -7
                     else:
-                        trust[i] = -3
+                        trust[i] = -8
                         print('err!!!本来预定的数字区中间夹了个非数字的小块')
                         print(i)
             elif diff_status[i+1] == 0:
@@ -628,13 +633,18 @@ def handle_small_diff(trust, peaks_diff, diff_status, mean_size, bias):
                     peaks_diff[i] = peaks_diff[i - 1] + peaks_diff[i]
                     peaks_diff[i-1] = 0
                     diff_status = get_diff_status(peaks_diff, mean_size, bias)
-                    trust[i-1] = -1
+                    trust[i-1] = -9
+            elif diff_status[i+1] == 2 and diff_status[i-1] != 2:
+                peaks_diff[i + 1] = peaks_diff[i + 1] + peaks_diff[i]
+                peaks_diff[i] = 0
+                diff_status = get_diff_status(peaks_diff, mean_size, bias)
+                trust[i] = -12
             elif diff_status[i+1] == 2 and diff_status[i-1] == 2:
-                trust[i] = -2
+                trust[i] = -10
                 print('warning!!!两边都是大区，不知道该划入哪边')
                 print(i)
             else:
-                trust[i] = -3
+                trust[i] = -11
                 print('err!!!未知错误，请检查！')
                 print(i)
 
@@ -643,6 +653,13 @@ def handle_small_diff(trust, peaks_diff, diff_status, mean_size, bias):
 
 trust1, peaks_diff1, diff_status1 = handle_small_diff(trust1, peaks_diff1, diff_status1, mean_size, bias)
 trust2, peaks_diff2, diff_status2 = handle_small_diff(trust2, peaks_diff2, diff_status2, mean_size, bias)
+
+
+# 第一轮之后的trust
+print('第一轮之后的trust:')
+print(trust1)
+print(trust2)
+
 
 def handle_big_diff(trust, peaks_diff, diff_status, mean_size, bias):
     sl = mean_size - bias - 1
@@ -690,7 +707,7 @@ print(line1_result)
 print(line2_result)
 
 
-# 若数量不对纠错
+# 两个连续偏大情况纠错
 def three2two_err_fix(line_result, num, mean_size, bias):
     length = len(line_result)
     too_big = np.zeros(line_result.shape)
@@ -729,6 +746,35 @@ print('修正3to2bug后：')
 print(line1_result)
 print(line2_result)
 
+# 连续两个一个偏大一个偏小情况纠正
+diff_status1 = get_diff_status(line1_result, mean_size, bias)
+diff_status2 = get_diff_status(line2_result, mean_size, bias)
+print('result status:')
+print(diff_status1)
+print(diff_status2)
+
+
+def big_small_fix(line_result, diff_status):
+    for i, status in enumerate(diff_status):
+        if i > 0 and ((status == 1 and diff_status[i - 1] == 2) or (status == 2 and diff_status[i - 1] == 1)):
+            if i < diff_status.shape[0] - 1 and diff_status[i+1] != 0:
+                print('warning!!! 连续三个位置异常，处理可能出错')
+
+            mix = line_result[i-1] + line_result[i]
+            line_result[i - 1] = mix // 2
+            line_result[i] = mix - line_result[i - 1]
+            diff_status[i] = -1
+
+    return line_result
+
+
+line1_result = big_small_fix(line1_result, diff_status1)
+line2_result = big_small_fix(line2_result, diff_status2)
+
+print('修正big_small bug后：')
+print(line1_result)
+print(line2_result)
+
 
 def show_result(first, line_result, resultRGB, line):
     point = first
@@ -740,9 +786,12 @@ def show_result(first, line_result, resultRGB, line):
         point += i
         name += 1
 
+
 show_result(peaks_line1[0], line1_result, resultRGB1, 1)
 show_result(peaks_line2[0], line2_result, resultRGB2, 2)
 
+diff_status1 = get_diff_status(line1_result, mean_size, bias)
+diff_status2 = get_diff_status(line2_result, mean_size, bias)
 print('result status:')
 print(diff_status1)
 print(diff_status2)
