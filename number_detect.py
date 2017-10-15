@@ -3,6 +3,7 @@ import cv2
 from pylab import *
 from matplotlib import pyplot as plt
 import scipy.signal as signal
+from skimage import data,draw,color,transform,feature
 
 # src="/home/py/PycharmProjects/image_process/extract/000048.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000027.jpg"
@@ -13,13 +14,41 @@ import scipy.signal as signal
 # src="/home/py/PycharmProjects/image_process/extract/000158.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000724.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000063.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000877.jpg"
+src="/home/py/PycharmProjects/image_process/extract/000877.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000067.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000150.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000018.jpg"
-src="/home/py/PycharmProjects/image_process/extract/000041.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000041.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000097.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000918.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000930.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000080.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000926.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000907.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000898.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000887.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000859.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000851.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000872.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000845.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000843.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000834.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000830.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000825.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000821.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000655.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000611.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000585.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000569.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000548.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000513.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000509.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000501.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000488.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000483.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000463.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000447.jpg"
 
 def hist_plt_plot(b,g,r):
     histImgB = cv2.calcHist([b],[0],None,[256],[1,256])
@@ -87,10 +116,10 @@ balRGB = cv2.medianBlur(balRGB,3)
 cv2.imshow('mediaBalRGB ',balRGB)
 
 
-# b, g, r = cv2.split(balRGB)
+b, g, r = cv2.split(balRGB)
 
 
-
+'''
 # color weight  RGB
 b, g, r = cv2.split(balRGB)
 b=np.int16(b)
@@ -130,6 +159,7 @@ g=np.uint8(g)
 r=np.uint8(r)
 
 b, g, r = cv2.split(fRGB)
+'''
 
 '''
 # color weight
@@ -231,8 +261,9 @@ b = Histb
 b = cv2.GaussianBlur(b,(3,3),0.5)
 '''
 
-
+fRGB = balRGB
 # (h, w) = fRGB.shape[:2]
+# LAB=cv2.cvtColor(balRGB,cv2.COLOR_BGR2LAB)
 LAB=cv2.cvtColor(fRGB,cv2.COLOR_BGR2LAB)
 cv2.imshow('LAB',LAB)
 cv2.imshow('labL',LAB[:,:,0])
@@ -312,6 +343,7 @@ cv2.imshow('L',V)
 
 (h, w) = nbRGB.shape[:2]
 
+'''
 # fen kuai jun heng
 blockxnum = 16
 blockynum = 2
@@ -336,8 +368,8 @@ for i in range(blockxnum):
 HistV = np.uint8(HistV)
 # HistRGB = cv2.GaussianBlur(HistRGB,(3,3),0.5)
 cv2.imshow('HistV', HistV)
-
-# HistV=cv2.equalizeHist(V)
+'''
+HistV=cv2.equalizeHist(V)
 LAB[:,:,0]=HistV
 histRBG=cv2.cvtColor(LAB, cv2.COLOR_LAB2BGR)
 gray=cv2.cvtColor(histRBG,cv2.COLOR_BGR2GRAY)
@@ -416,7 +448,8 @@ cv2.imshow("Eroded Image",eroded);
 # row_sumt = np.sum(simlpeV,axis=1)
 # plt.plot(row_sumt,'r')
 
-row_sum2 = np.sum(gray,axis=1)
+row_sum2 = np.sum(lapGray,axis=1)
+# row_sum2 = np.sum(gray,axis=1)
 # row_diff2 = np.diff(np.int64(row_sum2))
 x0 = gray.shape[0] // 2
 row_sump = row_sum2[x0-5:x0+6]
@@ -450,12 +483,10 @@ col_sh2 = np.sum(grayhigh2,axis=0)
 # plt.plot(col_sh2,'r')
 # plt.show()
 
-
 col_bd1 = np.where(col_sh1 > 250)[0]
 col_bd2 = np.where(col_sh2 > 250)[0]
 # print(col_bd1)
 # print(col_bd2)
-
 
 cps = 1
 # print(grayline1.shape)
@@ -471,6 +502,42 @@ resultRGB2 = resultRGB2[:,col_bd2[0]-cps:col_bd2[-1]+cps]
 # 计算平方和
 # col_sum_line1 = np.sum(grayline1**2,axis=0)
 # col_sum_line2 = np.sum(grayline2**2,axis=0)
+
+#对0进行预处理
+
+
+#加载图片，转换成灰度图并检测边缘
+image_rgb = histRBG
+image_gray = color.rgb2gray(image_rgb)
+edges = feature.canny(image_gray, sigma=2.0, low_threshold=0.55, high_threshold=0.8)
+
+#执行椭圆变换
+result =transform.hough_ellipse(edges, accuracy=1, threshold=178,min_size=13, max_size=14)
+result.sort(order='accumulator') #根据累加器排序
+
+#估计椭圆参数
+best = list(result[-1])  #排完序后取最后一个
+yc, xc, a, b = [int(round(x)) for x in best[1:5]]
+orientation = best[5]
+
+#在原图上画出椭圆
+cy, cx =draw.ellipse_perimeter(yc, xc, a, b, orientation)
+image_rgb[cy, cx] = (0, 0, 255) #在原图中用蓝色表示检测出的椭圆
+
+#分别用白色表示canny边缘，用红色表示检测出的椭圆，进行对比
+edges = color.gray2rgb(edges)
+edges[cy, cx] = (250, 0, 0)
+
+fig2, (ax1, ax2) = plt.subplots(ncols=2, nrows=1, figsize=(8, 4))
+
+ax1.set_title('Original picture')
+ax1.imshow(image_rgb)
+
+ax2.set_title('Edge (white) and result (red)')
+ax2.imshow(edges)
+
+plt.show()
+
 
 # 求和部分加入阈值
 shd = 180
@@ -495,8 +562,8 @@ col_sum_line1d = np.max(col_sum_line1) - col_sum_line1
 col_sum_line2d = np.max(col_sum_line2) - col_sum_line2
 # plt.plot(col_sum_line1d,'r')
 
-peaks_line1 = signal.find_peaks_cwt(col_sum_line1d, np.arange(1,9))
-peaks_line2 = signal.find_peaks_cwt(col_sum_line2d, np.arange(1,9))
+peaks_line1 = signal.find_peaks_cwt(col_sum_line1d, np.arange(1,8))
+peaks_line2 = signal.find_peaks_cwt(col_sum_line2d, np.arange(1,8))
 peaks_line1 = np.concatenate((np.array([0]),peaks_line1,np.array([len(col_sum_line1d)-1])), axis=0)
 peaks_line2 = np.concatenate((np.array([0]),peaks_line2,np.array([len(col_sum_line2d)-1])), axis=0)
 
@@ -612,7 +679,7 @@ def handle_small_diff(trust, peaks_diff, diff_status, mean_size, bias):
                     diff_status = get_diff_status(peaks_diff, mean_size, bias)
                     trust[i] = -5
                 elif diff_status[i+1] == 0:
-                    if diff_status[i] < bias + 1:
+                    if peaks_diff[i] < bias + 2:
                         # 超小块噪声 直接归并到旁边
                         if peaks_diff[i-1] > peaks_diff[i+1]:
                             peaks_diff[i + 1] = peaks_diff[i + 1] + peaks_diff[i]
