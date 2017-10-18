@@ -4,17 +4,29 @@ from pylab import *
 from matplotlib import pyplot as plt
 import scipy.signal as signal
 from skimage import data,draw,color,transform,feature
+import detect_peaks
 
 # src="/home/py/PycharmProjects/image_process/extract/000048.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000006.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000012.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000027.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000019.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000118.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000033.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000055.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000075.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000158.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000177.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000200.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000205.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000212.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000216.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000229.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000246.jpg"
+src="/home/py/PycharmProjects/image_process/extract/000259.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000724.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000063.jpg"
-src="/home/py/PycharmProjects/image_process/extract/000877.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000877.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000067.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000150.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
@@ -23,7 +35,6 @@ src="/home/py/PycharmProjects/image_process/extract/000877.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000097.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000918.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000930.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000080.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000926.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000907.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000898.jpg"
@@ -312,27 +323,29 @@ col_bd = col_bd[np.where(col_bd < col_li[-1])]
 
 # 高亮像素计数圈数字位置法
 vhigh = V
-vhigh[np.where(V < 140)] = 0
+vhigh[np.where(V < 120)] = 0
 row_sum = np.sum(vhigh,axis=1)
 col_sum = np.sum(vhigh,axis=0)
 
 row_bd = np.where(row_sum > 2200)[0]
-col_bd = np.where(col_sum > 800)[0]
+col_bd = np.where(col_sum > 200)[0]
 
 
 
-print(row_bd)
-print(col_bd)
+# print(row_bd)
+# print(col_bd)
 # plt.plot(row_sum,'b')
 # plt.plot(col_sum,'r')
 # plt.show()
-cps = 4
+cps = 2
 
 row_f = max(0, row_bd[0]-cps)
 row_l = min(row_bd[-1]+cps, fRGB.shape[0])
 col_f = max(0, col_bd[0]-cps)
 col_l = min(col_bd[-1]+cps, fRGB.shape[1])
 
+# print(col_bd[-1])
+# print(col_l)
 nbRGB = fRGB[row_f:row_l,col_f:col_l,:]
 resultRGB = RGB[row_f:row_l,col_f:col_l,:]
 
@@ -471,10 +484,11 @@ cv2.imshow('grayline2',grayline2)
 # cv2.imshow('graylines1',graylines1)
 # cv2.imshow('graylines2',graylines2)
 '''
-grayhigh1 = grayline1
-grayhigh2 = grayline2
-grayhigh1[np.where(grayline1 < 180)] = 0
-grayhigh2[np.where(grayline2 < 180)] = 0
+grayhigh1 = grayline1.copy()
+grayhigh2 = grayline2.copy()
+
+grayhigh1[np.where(grayline1 < 160)] = 0
+grayhigh2[np.where(grayline2 < 160)] = 0
 
 col_sh1 = np.sum(grayhigh1,axis=0)
 col_sh2 = np.sum(grayhigh2,axis=0)
@@ -483,18 +497,42 @@ col_sh2 = np.sum(grayhigh2,axis=0)
 # plt.plot(col_sh2,'r')
 # plt.show()
 
-col_bd1 = np.where(col_sh1 > 250)[0]
-col_bd2 = np.where(col_sh2 > 250)[0]
+
+
+col_bd1 = np.where(col_sh1 > 500)[0]
+col_bd2 = np.where(col_sh2 > 500)[0]
 # print(col_bd1)
 # print(col_bd2)
 
-cps = 1
+
+# 尺寸确认
+# print('尺寸确认0：')
 # print(grayline1.shape)
-grayline1 = grayline1[:,col_bd1[0]-cps:col_bd1[-1]+cps]
-grayline2 = grayline2[:,col_bd2[0]-cps:col_bd2[-1]+cps]
-resultRGB1 = resultRGB1[:,col_bd1[0]-cps:col_bd1[-1]+cps]
-resultRGB2 = resultRGB2[:,col_bd2[0]-cps:col_bd2[-1]+cps]
+# print(resultRGB1.shape)
+# print(grayline2.shape)
+# print(resultRGB2.shape)
+
+cps = 3
 # print(grayline1.shape)
+gshape1 = grayline1.shape
+gshape2 = grayline2.shape
+grayline1 = grayline1[:,max(col_bd1[0]-cps,0):min(col_bd1[-1]+cps,gshape1[1])]
+grayline2 = grayline2[:,max(col_bd2[0]-cps,0):min(col_bd2[-1]+cps,gshape2[1])]
+
+cv2.imshow('grayline1_2',grayline1)
+cv2.imshow('grayline2_2',grayline2)
+resultRGB1 = resultRGB1[:,max(col_bd1[0]-cps,0):min(col_bd1[-1]+cps,gshape1[1]),:]
+resultRGB2 = resultRGB2[:,max(col_bd2[0]-cps,0):min(col_bd2[-1]+cps,gshape2[1]),:]
+# print(grayline1.shape)
+
+
+# 尺寸确认
+# print('尺寸确认01：')
+# print(grayline1.shape)
+# print(resultRGB1.shape)
+# print(grayline2.shape)
+# print(resultRGB2.shape)
+'''
 '''
 # 每一行计算列和
 # col_sum_line1 = np.sum(grayline1,axis=0)
@@ -503,16 +541,19 @@ resultRGB2 = resultRGB2[:,col_bd2[0]-cps:col_bd2[-1]+cps]
 # col_sum_line1 = np.sum(grayline1**2,axis=0)
 # col_sum_line2 = np.sum(grayline2**2,axis=0)
 
+'''
+'''
 #对0进行预处理
-
-
 #加载图片，转换成灰度图并检测边缘
 image_rgb = histRBG
 image_gray = color.rgb2gray(image_rgb)
-edges = feature.canny(image_gray, sigma=2.0, low_threshold=0.55, high_threshold=0.8)
+edges = feature.canny(image_gray, sigma=1.7, low_threshold=0.4, high_threshold=0.8)
+# edges = color.gray2rgb(edges)
+edgesim = np.uint8(edges)*255
+cv2.imshow('canny',edgesim)
 
 #执行椭圆变换
-result =transform.hough_ellipse(edges, accuracy=1, threshold=178,min_size=13, max_size=14)
+result =transform.hough_ellipse(edges, accuracy=1, threshold=178,min_size=5, max_size=5)
 result.sort(order='accumulator') #根据累加器排序
 
 #估计椭圆参数
@@ -528,21 +569,57 @@ image_rgb[cy, cx] = (0, 0, 255) #在原图中用蓝色表示检测出的椭圆
 edges = color.gray2rgb(edges)
 edges[cy, cx] = (250, 0, 0)
 
-fig2, (ax1, ax2) = plt.subplots(ncols=2, nrows=1, figsize=(8, 4))
+# fig2, (ax1, ax2) = plt.subplots(ncols=2, nrows=1, figsize=(8, 4))
 
-ax1.set_title('Original picture')
-ax1.imshow(image_rgb)
+# ax1.set_title('Original picture')
+# ax1.imshow(image_rgb)
+cv2.imshow('Original picture',image_rgb)
 
-ax2.set_title('Edge (white) and result (red)')
-ax2.imshow(edges)
+# ax2.set_title('Edge (white) and result (red)')
+# ax2.imshow(edges)
+cv2.imshow('Edge (white) and result (red)',edges)
 
-plt.show()
+# plt.show()
+'''
+
+'''
+#hough圆变化
+
+grayfat = cv2.resize(gray,(round(gray.shape[1]*2), gray.shape[0]), interpolation=cv2.INTER_CUBIC)
+nbRGBfat = cv2.resize(nbRGB,(round(nbRGB.shape[1]*2), nbRGB.shape[0]), interpolation=cv2.INTER_CUBIC)
+cv2.imshow('grayfat',grayfat)
 
 
+hough_radii = np.arange(8,11,1)  #半径范围
+hough_res =transform.hough_circle(grayfat, hough_radii)  #圆变换
+# print('hough_res')
+# print(hough_res)
+centers = []  #保存所有圆心点坐标
+accums = []   #累积值
+radii = []    #半径
+
+for radius, h in zip(hough_radii, hough_res):
+    #每一个半径值，取出其中两个圆
+    num_peaks = 8
+    peaks =feature.peak_local_max(h, num_peaks=num_peaks) #取出峰值
+    centers.extend(peaks)
+    accums.extend(h[peaks[:, 0], peaks[:, 1]])
+    radii.extend([radius] * num_peaks)
+
+#画出最接近的圆
+nbRGBfatc =np.copy(nbRGBfat)
+for idx in np.argsort(accums)[::-1][:2]:
+    center_x, center_y = centers[idx]
+    radius = radii[idx]
+    cx, cy =draw.circle_perimeter(center_y, center_x, radius)
+    nbRGBfatc[cy, cx] =(255,0,0)
+
+cv2.imshow('nbRGBfatc', nbRGBfatc)
+'''
 # 求和部分加入阈值
-shd = 180
-grayline1hd = grayline1
-grayline2hd = grayline2
+shd = 160
+grayline1hd = grayline1.copy()
+grayline2hd = grayline2.copy()
 grayline1hd[np.where(grayline1 < shd)] //= 2
 grayline2hd[np.where(grayline2 < shd)] //= 2
 col_sum_line1 = np.sum(grayline1hd,axis=0)
@@ -562,8 +639,12 @@ col_sum_line1d = np.max(col_sum_line1) - col_sum_line1
 col_sum_line2d = np.max(col_sum_line2) - col_sum_line2
 # plt.plot(col_sum_line1d,'r')
 
-peaks_line1 = signal.find_peaks_cwt(col_sum_line1d, np.arange(1,8))
-peaks_line2 = signal.find_peaks_cwt(col_sum_line2d, np.arange(1,8))
+peaks_line1 = signal.find_peaks_cwt(col_sum_line1d, np.arange(1,9))
+peaks_line2 = signal.find_peaks_cwt(col_sum_line2d, np.arange(1,9))
+
+# peaks_line1 = detect_peaks.detect_peaks(col_sum_line1d, mph=300, mpd=3, threshold=10)
+# peaks_line2 = detect_peaks.detect_peaks(col_sum_line2d, mph=300, mpd=3, threshold=10)
+
 peaks_line1 = np.concatenate((np.array([0]),peaks_line1,np.array([len(col_sum_line1d)-1])), axis=0)
 peaks_line2 = np.concatenate((np.array([0]),peaks_line2,np.array([len(col_sum_line2d)-1])), axis=0)
 
@@ -573,10 +654,18 @@ peaks_line2 = np.concatenate((np.array([0]),peaks_line2,np.array([len(col_sum_li
 peaks_diff1 = np.diff(peaks_line1)
 peaks_diff2 = np.diff(peaks_line2)
 
+# 尺寸确认
+# print('尺寸确认：')
+# print(grayline1.shape)
+# print(resultRGB1.shape)
+# print(grayline2.shape)
+# print(resultRGB2.shape)
 # 中位数做参考值
 diff_queue = np.append(peaks_diff1, peaks_diff2)
 diff_queue = diff_queue[np.where(diff_queue > 8)]
 diff_queue = diff_queue[np.where(diff_queue < 16)]
+
+# mean_size = np.mean(diff_queue)
 mean_size = np.median(diff_queue)
 
 # 众数做参考值
@@ -647,7 +736,7 @@ def handle_small_diff(trust, peaks_diff, diff_status, mean_size, bias):
     for i in range(n):
         if diff_status[i] == 1:
             if i < n-1 and diff_status[i+1] == 1:
-                if peaks_diff[i + 1] + peaks_diff[i] < mean_size + bias+1:
+                if peaks_diff[i + 1] + peaks_diff[i] < mean_size + bias+2:
                     peaks_diff[i + 1] = peaks_diff[i + 1] + peaks_diff[i]
                     peaks_diff[i] = 0
                     diff_status = get_diff_status(peaks_diff, mean_size, bias)
@@ -743,7 +832,7 @@ def handle_big_diff(trust, peaks_diff, diff_status, mean_size, bias):
                 j += 1
                 fenjie = round(diff/j)
                 # print(fenjie)
-                if fenjie < ll and fenjie > sl+1:
+                if fenjie < ll+bias*2 and fenjie > sl+1:
                     # print(peaks_diff)
                     peaks_diff[i] = fenjie
                     for n in range(j-2):
@@ -779,9 +868,9 @@ def three2two_err_fix(line_result, num, mean_size, bias):
     length = len(line_result)
     too_big = np.zeros(line_result.shape)
     too_big = np.append(too_big,too_big)
-    if length >= num:
+    if length >= 20:
         return line_result
-    elif length < num:
+    elif length < 20:
         i = 0
         for result in line_result:
             if result > mean_size + 2:
@@ -794,7 +883,7 @@ def three2two_err_fix(line_result, num, mean_size, bias):
                     sl = mean_size - bias
                     ll = mean_size + bias
                     trsplit = round(mix/3)
-                    if trsplit > sl and trsplit < ll:
+                    if trsplit > sl-2 and trsplit < ll:
                         line_result[i-1] = trsplit
                         line_result[i] = trsplit
                         line_result = np.insert(line_result, i, mix - 2 * trsplit)
@@ -842,6 +931,99 @@ print('修正big_small bug后：')
 print(line1_result)
 print(line2_result)
 
+# 相隔一个位置有一个小块的bug修复
+diff_status1 = get_diff_status(line1_result, mean_size, bias)
+diff_status2 = get_diff_status(line2_result, mean_size, bias)
+print('result status:')
+print(diff_status1)
+print(diff_status2)
+
+
+def small_big_small_fix(line_result, diff_status):
+    for i, status in enumerate(diff_status):
+        if i > 1 and (status == 1 and diff_status[i - 1] != 1 and diff_status[i - 2] == 1):
+            if i < diff_status.shape[0] - 1 and diff_status[i+1] != 0:
+                print('warning!!! 后面位置仍然异常，处理可能出错')
+            mix = line_result[i-1] + line_result[i] + line_result[i-2]
+            line_result[i - 1] = mix // 2
+            line_result[i - 2] = 0
+            line_result[i] = mix - line_result[i - 1]
+            diff_status[i] = -1
+
+    return line_result
+
+line1_result = small_big_small_fix(line1_result, diff_status1)
+line2_result = small_big_small_fix(line2_result, diff_status2)
+
+line1_result = line1_result[np.where(line1_result>0)]
+line2_result = line2_result[np.where(line2_result>0)]
+print('修正small_big_small bug后：')
+print(line1_result)
+print(line2_result)
+
+
+# 连续三个小于平均数
+diff_status1 = get_diff_status(line1_result, mean_size, 0)
+diff_status2 = get_diff_status(line2_result, mean_size, 0)
+print('result status:')
+print(diff_status1)
+print(diff_status2)
+
+
+def small_small_small_fix(line_result, diff_status):
+    for i, status in enumerate(diff_status):
+        if i > 1 and (status == 1 and diff_status[i - 1] == 1 and diff_status[i - 2] == 1):
+            if i < diff_status.shape[0] - 1 and diff_status[i+1] != 0:
+                print('warning!!! 后面位置仍然异常，处理可能出错')
+            mix = line_result[i-1] + line_result[i] + line_result[i-2]
+            line_result[i - 1] = mix // 2
+            line_result[i - 2] = 0
+            line_result[i] = mix - line_result[i - 1]
+            diff_status[i] = -1
+
+    return line_result
+
+
+# line1_result = small_small_small_fix(line1_result, diff_status1)
+# line2_result = small_small_small_fix(line2_result, diff_status2)
+
+# line1_result = line1_result[np.where(line1_result>0)]
+# line2_result = line2_result[np.where(line2_result>0)]
+# print('修正small_small_small bug后：')
+# print(line1_result)
+# print(line2_result)
+
+# 连续三个小于平均数
+diff_status1 = get_diff_status(line1_result, mean_size, 0)
+diff_status2 = get_diff_status(line2_result, mean_size, 0)
+print('result status:')
+print(diff_status1)
+print(diff_status2)
+
+
+def small_small_fix(line_result, diff_status):
+    for i, status in enumerate(diff_status):
+        if i > 1 and (status == 1 and diff_status[i - 1] == 1 and diff_status[i - 2] == 1):
+            if i < diff_status.shape[0] - 1 and diff_status[i+1] != 0:
+                print('warning!!! 后面位置仍然异常，处理可能出错')
+            mix = line_result[i-1] + line_result[i] + line_result[i-2]
+            line_result[i - 1] = mix // 2
+            line_result[i - 2] = 0
+            line_result[i] = mix - line_result[i - 1]
+            diff_status[i] = -1
+
+    return line_result
+
+
+# line1_result = small_small_fix(line1_result, diff_status1)
+# line2_result = small_small_fix(line2_result, diff_status2)
+
+# line1_result = line1_result[np.where(line1_result>0)]
+# line2_result = line2_result[np.where(line2_result>0)]
+# print('修正small_small bug后：')
+# print(line1_result)
+# print(line2_result)
+
 
 def show_result(first, line_result, resultRGB, line):
     point = first
@@ -849,6 +1031,10 @@ def show_result(first, line_result, resultRGB, line):
     fat = 2
     for i in line_result:
         sigleim = resultRGB[:,max(point-fat,0):min(point+i+fat,resultRGB.shape[1]-1)]
+        # print(point-fat)
+        # print(point+i+fat)
+        # print(resultRGB.shape)
+        # print(sigleim.shape)
         cv2.imshow(str(line)+'sigle'+str(name),sigleim)
         point += i
         name += 1
@@ -864,6 +1050,7 @@ print(diff_status1)
 print(diff_status2)
 
 plt.plot(col_sum_line1d,'b')
+# plt.plot(col_sum_line1,'r')
 plt.show()
 
 
@@ -1085,5 +1272,6 @@ for i in range(0,len(xline1)-1):
 
 
 """
+
 cv2.waitKey(0)
 cv2.destroyAllWindows()
