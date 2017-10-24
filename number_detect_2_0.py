@@ -236,7 +236,7 @@ resultRGB2 = resultRGB[row_bd2 - rdt:, :]
 cv2.imshow('grayline1', grayline1)
 
 
-
+'''
 grayhigh1 = grayline1.copy()
 grayhigh2 = grayline2.copy()
 
@@ -274,7 +274,7 @@ cv2.imshow('grayline2_2',grayline2)
 resultRGB1 = resultRGB1[:,max(col_bd1[0]-cps,0):min(col_bd1[-1]+cps,gshape1[1]),:]
 resultRGB2 = resultRGB2[:,max(col_bd2[0]-cps,0):min(col_bd2[-1]+cps,gshape2[1]),:]
 # print(grayline1.shape)
-
+'''
 # 尺寸确认
 # print('尺寸确认01：')
 # print(grayline1.shape)
@@ -285,6 +285,8 @@ resultRGB2 = resultRGB2[:,max(col_bd2[0]-cps,0):min(col_bd2[-1]+cps,gshape2[1]),
 
 # 二次分块均衡
 shd = 170
+grayline1od = grayline1.copy()
+grayline2od = grayline2.copy()
 grayline1hd = grayline1.copy()
 grayline2hd = grayline2.copy()
 grayline1hd[np.where(grayline1 < shd)] //= 2
@@ -365,6 +367,235 @@ peaks_line2 = np.concatenate((np.array([0]), peaks_line2, np.array([len(col_sum_
 peaks_diff1 = np.diff(peaks_line1)
 peaks_diff2 = np.diff(peaks_line2)
 
+
+def get_bd_rawsum_diff(peaks_line, grayline):
+    bd_diff = []
+    for i, line in enumerate(peaks_line):
+        pl = float64(grayline[:,line])
+        pl_diff = np.diff(pl)
+        pl_diff_abs = [i**2 for i in pl_diff]
+        bd_diff.append(sum(pl_diff_abs))
+    return bd_diff
+
+
+bd_diff1 = get_bd_rawsum_diff(peaks_line1, grayline1)
+bd_diff2 = get_bd_rawsum_diff(peaks_line2, grayline2)
+print('bd_diff:')
+print(bd_diff1)
+print(bd_diff2)
+
+def get_mser_line(grayline):
+    mser = cv2.MSER_create(_min_area=40, _max_area=90)
+    regions, boxes = mser.detectRegions(grayline)
+    mser_line1 = []
+    mser_line2 = []
+    wrange = 3
+    hrange = 3
+    histnum_w = hist(boxes[:, 2])
+    wmax_index = find(histnum_w[0][:] == max(histnum_w[0][:]))
+    wmin = histnum_w[1][wmax_index] - wrange
+    wmax = histnum_w[1][wmax_index] + wrange
+    histnum_h = hist(boxes[:, 3])
+    hmax_index = find(histnum_h[0][:] == max(histnum_h[0][:]))
+    hmin = histnum_h[1][hmax_index] - hrange
+    hmax = histnum_h[1][hmax_index] + hrange
+    wmid = int((wmax[0] + wmin[0]) / 2) + 2
+    hmid = int((hmax[0] + hmin[0]) / 2) + 3
+    xn = []
+    yn = []
+    ww = []
+    for box in boxes:
+        x, y, w1, h1 = box
+        if w1 < wmax[0] and w1 > wmin[0] and h1 > hmin[0] and h1 < hmax[0]:
+            if x in xn and y in yn:
+                pass
+            else:
+                xn.append(x)
+                yn.append(y)
+                w1 = wmid
+                h1 = hmid
+                ww.append(w1)
+                mser_line1.append(x)
+                mser_line2.append(x+w1)
+
+    return mser_line1, mser_line2, ww
+
+
+
+mser_line11, mser_line12, mser_diff1 = get_mser_line(grayline1)
+mser_line21, mser_line22, mser_diff2 = get_mser_line(grayline2)
+print("MSER :")
+print(mser_line11)
+print(mser_line12)
+print(mser_line21)
+print(mser_line22)
+mean_size = (np.mean(mser_diff1) + np.mean(mser_diff2))/2+2.5
+
+
+def merge_mser_line(mser_line1, mser_line2, mean_size):
+    mser_line1.sort()
+    mser_line2.sort()
+    print('排序后：')
+    print(mser_line1)
+    print(mser_line2)
+    delete = [0] * len(mser_line1)
+    bias = 3
+    for i in range(len(mser_line1)):
+        if i > 0 and mser_line1[i] < mser_line2[i-1]:
+            if mser_line1[i] - mser_line1[i-1] < bias or mser_line2[i] - mser_line2[i-1] < bias:
+                mser_line1[i] = mser_line1[i - 1]
+                mser_line1[i - 1] = -1
+                mser_line2[i - 1] = -1
+                # print(i)
+            elif mser_line2[i-1] - mser_line1[i] > bias:
+                print("warning!!! MSER结果出现交叉重叠！！")
+                if i < len(mser_line1) - 1 and i-1 > 0:
+                    af = mser_line1[i-1] - mser_line2[i-2]
+                    bf = mser_line1[i] - mser_line2[i - 2]
+                    ap = mser_line1[i + 1] - mser_line2[i - 1]
+                    bp = mser_line1[i+1] - mser_line2[i]
+                    if af <= bias or ap <= bias:
+                        if bf > bias and bp > bias:
+                            # 认为i-1是正确位置，除掉i
+                            mser_line1[i] = mser_line1[i-1]
+                            mser_line2[i] = mser_line2[i - 1]
+                            delete[i] = 1
+                        else:
+                            print('warning!!! 两个位置都有非常接近的相邻块')
+                            print(i)
+                    elif bf <= bias or bp <= bias:
+                        if af > bias and ap > bias:
+                            # 认为i是正确位置，除掉i-1
+                            mser_line1[i-1] = mser_line1[i]
+                            mser_line2[i-1] = mser_line2[i]
+                        else:
+                            print('warning!!! 两个位置都有非常接近的相邻块')
+                            print(i)
+                    else:
+                        # 两个位置都没有相邻的块来判断 用余数决胜负
+                        afy = af % mean_size
+                        bfy = bf % mean_size
+                        apy = ap % mean_size
+                        bpy = bp % mean_size
+                        ay = min(afy, apy)
+                        by = min(bfy, bpy)
+                        if ay > by:
+                            # 认为i是正确位置，除掉i-1
+                            mser_line1[i - 1] = mser_line1[i]
+                            mser_line2[i - 1] = mser_line2[i]
+                            delete[i - 1] = 1
+                        elif by > ay:
+                            # 认为i-1是正确位置，除掉i
+                            mser_line1[i] = mser_line1[i - 1]
+                            mser_line2[i] = mser_line2[i - 1]
+                            delete[i] = 1
+                        else:
+                            print('warning!!余数相同无法判断')
+                            print(i)
+                elif i-1 > 0:
+                    af = mser_line1[i - 1] - mser_line2[i - 2]
+                    bf = mser_line1[i] - mser_line2[i - 2]
+                    if af <= bias:
+                        if bf > bias:
+                            # 认为i-1是正确位置，除掉i
+                            mser_line1[i] = mser_line1[i - 1]
+                            mser_line2[i] = mser_line2[i - 1]
+                            delete[i] = 1
+                        else:
+                            print('warning!!! 两个位置都有非常接近的相邻块')
+                            print(i)
+                    elif bf <= bias:
+                        if af > bias:
+                            # 认为i是正确位置，除掉i-1
+                            mser_line1[i - 1] = mser_line1[i]
+                            mser_line2[i - 1] = mser_line2[i]
+                            delete[i - 1] = 1
+                        else:
+                            print('warning!!! 两个位置都有非常接近的相邻块')
+                            print(i)
+                    else:
+                        # 两个位置都没有相邻的块来判断 用余数决胜负
+                        afy = af % mean_size
+                        bfy = bf % mean_size
+                        if afy > bfy:
+                            # 认为i是正确位置，除掉i-1
+                            mser_line1[i - 1] = mser_line1[i]
+                            mser_line2[i - 1] = mser_line2[i]
+                            delete[i-1] = 1
+                        elif bfy > afy:
+                            # 认为i-1是正确位置，除掉i
+                            mser_line1[i] = mser_line1[i - 1]
+                            mser_line2[i] = mser_line2[i - 1]
+                            delete[i] = 1
+                        else:
+                            print('warning!!余数相同无法判断')
+                            print(i)
+
+    print(mser_line1)
+    print(mser_line2)
+    mser_line1 = [i for i in mser_line1 if i != -1]
+    mser_line2 = [i for i in mser_line2 if i != -1]
+    print(mser_line1)
+    print(mser_line2)
+    return mser_line1, mser_line2
+
+mser_line11, mser_line12 = merge_mser_line(mser_line11, mser_line12, mean_size)
+mser_line21, mser_line22 = merge_mser_line(mser_line21, mser_line22, mean_size)
+print("MSER 排序去重 :")
+print(mser_line11)
+print(mser_line12)
+print(mser_line21)
+print(mser_line22)
+
+
+'''
+mser = cv2.MSER_create(_min_area=40, _max_area=90)
+regions, boxes = mser.detectRegions(grayline1)
+temp1 = np.zeros(grayline1.shape)
+wrange = 4
+hrange = 4
+histnum_w = hist(boxes[:, 2])
+wmax_index = find(histnum_w[0][:] == max(histnum_w[0][:]))
+wmin = histnum_w[1][wmax_index] - wrange
+wmax = histnum_w[1][wmax_index] + wrange
+histnum_h = hist(boxes[:, 3])
+hmax_index = find(histnum_h[0][:] == max(histnum_h[0][:]))
+hmin = histnum_h[1][hmax_index] - hrange
+hmax = histnum_h[1][hmax_index] + hrange
+wmid=int((wmax[0]+wmin[0])/2)+2
+hmid=int((hmax[0]+hmin[0])/2)+3
+xn=[]
+yn=[]
+for box in boxes:
+    x, y, w1, h1 = box
+    if w1 < wmax[0] and w1 > wmin[0] and h1 > hmin[0] and h1 < hmax[0]:
+        if x in xn and y in yn:
+            pass
+        else:
+            xn.append(x)
+            yn.append(y)
+            w1=wmid
+            h1=hmid
+            temp1[y:y + h1, x:x + w1] = 1
+temp1=temp1*grayline1
+temp1=np.uint8(temp1)
+cv2.imshow('temp1',temp1)
+# print('mser:')
+# print(regions)
+# print(boxes)
+'''
+
+def plot_bd_rawsum(peaks_line, grayline):
+    for i, line in enumerate(peaks_line):
+        pl = float64(grayline[:,line])
+        pl = np.add(np.ones(pl.shape)*255*i, pl)
+        plt.plot(pl, 'r')
+    plt.show()
+
+
+# plot_bd_rawsum(peaks_line1, grayline1)
+# plot_bd_rawsum(peaks_line2, grayline2)
+#
 # 尺寸确认
 # print('尺寸确认：')
 # print(grayline1.shape)
@@ -377,7 +608,9 @@ diff_queue = diff_queue[np.where(diff_queue > 8)]
 diff_queue = diff_queue[np.where(diff_queue < 16)]
 
 # mean_size = np.mean(diff_queue)
-mean_size = np.median(diff_queue)
+# mean_size = np.median(diff_queue)
+mean_size = (np.mean(mser_diff1) + np.mean(mser_diff2))/2+2.5
+
 
 # 众数做参考值
 # counts = np.bincount(diff_queue)
@@ -421,6 +654,9 @@ print(peaks_diff2)
 print('Init status:')
 print(diff_status1)
 print(diff_status2)
+plot_bd_rawsum(peaks_line1, grayline1)
+plot_bd_rawsum(peaks_line2, grayline2)
+
 
 # 从分界点周围的宽度确定第一次置信度
 def get_neighber_trust(trust, peaks_diff, diff_status):
