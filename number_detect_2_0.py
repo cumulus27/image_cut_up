@@ -9,7 +9,7 @@ import detect_peaks
 # src="/home/py/PycharmProjects/image_process/extract/000048.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000006.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000012.jpg"
-src="/home/py/PycharmProjects/image_process/extract/000027.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000027.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000019.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000118.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000033.jpg"
@@ -26,7 +26,7 @@ src="/home/py/PycharmProjects/image_process/extract/000027.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000259.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000724.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000063.jpg"
-# src = "/home/py/PycharmProjects/image_process/extract/000877.jpg"
+src = "/home/py/PycharmProjects/image_process/extract/000877.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000067.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000150.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
@@ -142,6 +142,7 @@ col_bd_zeros = np.where(col_sum_zeros < mean_size_zeros+1)[0]
 print(col_bd_zeros)
 
 # col_bd_zeros_diff = np.diff(col_bd_zeros)
+
 
 
 
@@ -361,6 +362,11 @@ peaks_line2 = detect_peaks.detect_peaks(col_sum_line2d, mph=300, mpd=5, threshol
 peaks_line1 = np.concatenate((np.array([0]), peaks_line1, np.array([len(col_sum_line1d) - 1])), axis=0)
 peaks_line2 = np.concatenate((np.array([0]), peaks_line2, np.array([len(col_sum_line2d) - 1])), axis=0)
 
+print('尺寸确认：')
+print(grayline1.shape)
+print(col_sum_line1d.shape)
+print(grayline2.shape)
+print(col_sum_line2d.shape)
 # peaks_high1 = col_sum_line1d[peaks_line1]
 # peaks_high2 = col_sum_line1d[peaks_line2]
 
@@ -609,7 +615,7 @@ diff_queue = diff_queue[np.where(diff_queue < 16)]
 
 # mean_size = np.mean(diff_queue)
 # mean_size = np.median(diff_queue)
-mean_size = (np.mean(mser_diff1) + np.mean(mser_diff2))/2+2.5
+mean_size = (np.mean(mser_diff1) + np.mean(mser_diff2))/2+2
 
 
 # 众数做参考值
@@ -654,8 +660,8 @@ print(peaks_diff2)
 print('Init status:')
 print(diff_status1)
 print(diff_status2)
-plot_bd_rawsum(peaks_line1, grayline1)
-plot_bd_rawsum(peaks_line2, grayline2)
+# plot_bd_rawsum(peaks_line1, grayline1)
+# plot_bd_rawsum(peaks_line2, grayline2)
 
 
 # 从分界点周围的宽度确定第一次置信度
@@ -679,6 +685,28 @@ print(trust1)
 print(trust2)
 
 
+# 将两种方案得到的分界线融合起来
+def combine_the_two_way(peaks_line, mser_line1, mser_line2, trust):
+    i = 0
+    mser_line1.append(1000)
+    for j,line in enumerate(peaks_line):
+        while i < len(mser_line1)-1 and line > mser_line1[i+1]:
+            i += 1
+
+        if abs(mser_line1[i] - line) < bias or abs(mser_line2[i] - line) < bias:
+            trust[j] += 0.8
+        elif line - mser_line1[i] > bias + 1 and mser_line2[i] - line > bias + 1:
+            trust[j] -= 0.9
+
+    return trust
+
+
+trust1 = combine_the_two_way(peaks_line1, mser_line11, mser_line12, trust1)
+trust2 = combine_the_two_way(peaks_line2, mser_line21, mser_line22, trust2)
+print('融合后的置信度：')
+print(trust1)
+print(trust2)
+
 #从分界线本身像素分布确定第二次置信度
 def get_self_trust(trust, grayline, peaks_line, thresholdh, thresholdl):
     graylinehd = grayline.copy()
@@ -696,9 +724,9 @@ def get_self_trust(trust, grayline, peaks_line, thresholdh, thresholdl):
         if part1[i] > 200 and part3[i] > 200:
             if part2[i] < 200:
                 if trust[i] < 0.8:
-                    trust[i] = -50
+                    trust[i] -= 0.8
                 else:
-                    trust[i] = -49
+                    trust[i] -= 0.5
                 # print('Get one zero:')
                 # print(i)
                 # print(peaks_line[i])
@@ -721,8 +749,9 @@ print(trust1)
 print(trust2)
 
 def delete_zeros(line_result, trust):
+
     for i, status in enumerate(trust):
-        if i > 0 and status == -50:
+        if i > 0 and i < len(trust)-1 and status < 0:
             mix = line_result[i - 1] + line_result[i]
             line_result[i - 1] = 0
             line_result[i] = mix
@@ -733,14 +762,21 @@ def delete_zeros(line_result, trust):
 peaks_diff1 = delete_zeros(peaks_diff1, trust1)
 peaks_diff2 = delete_zeros(peaks_diff2, trust2)
 
-trust1 = trust1[np.where(peaks_diff1 > 0)]
-trust2 = trust2[np.where(peaks_diff2 > 0)]
+trust1 = trust1[np.where(trust1 >= 0)]
+trust2 = trust2[np.where(trust2 >= 0)]
 peaks_diff1 = peaks_diff1[np.where(peaks_diff1 > 0)]
 peaks_diff2  = peaks_diff2[np.where(peaks_diff2 > 0)]
+
+diff_status1 = get_diff_status(peaks_diff1, mean_size, bias)
+diff_status2 = get_diff_status(peaks_diff2, mean_size, bias)
 
 print('Delete Zeros:')
 print(peaks_diff1)
 print(peaks_diff2)
+print(trust1)
+print(trust2)
+print(diff_status1)
+print(diff_status2)
 
 
 def handle_small_diff(trust, peaks_diff, diff_status, mean_size, bias):
@@ -766,11 +802,15 @@ def handle_small_diff(trust, peaks_diff, diff_status, mean_size, bias):
                 peaks_diff[i] = 0
                 diff_status = get_diff_status(peaks_diff, mean_size, bias)
                 trust[i] = -3
-            elif i == 0 and peaks_diff[i] < bias + 1:
-                peaks_diff[i + 1] = peaks_diff[i + 1] + peaks_diff[i]
-                peaks_diff[i] = 0
-                diff_status = get_diff_status(peaks_diff, mean_size, bias)
-                trust[i] = -4
+            elif i == 0 and peaks_diff[i] < mean_size // 2:
+                # 第一个分块偏小 且大小小于偏差值
+                if trust[i+1] > 0:
+                    pass
+                else:
+                    peaks_diff[i + 1] = peaks_diff[i + 1] + peaks_diff[i]
+                    peaks_diff[i] = 0
+                    diff_status = get_diff_status(peaks_diff, mean_size, bias)
+                    trust[i] = -4
             elif i > 0 and diff_status[i - 1] == 0:
                 # print(diff_status[i])
                 # print(diff_status[i+1])
@@ -802,12 +842,13 @@ def handle_small_diff(trust, peaks_diff, diff_status, mean_size, bias):
                     peaks_diff[i - 1] = 0
                     diff_status = get_diff_status(peaks_diff, mean_size, bias)
                     trust[i - 1] = -9
-            elif diff_status[i + 1] == 2 and diff_status[i - 1] != 2:
+            elif i > 0 and diff_status[i + 1] == 2 and diff_status[i - 1] != 2:
+                # 后面的位置偏大 前面的位置不偏大 把本位置和后面的位置合并
                 peaks_diff[i + 1] = peaks_diff[i + 1] + peaks_diff[i]
                 peaks_diff[i] = 0
                 diff_status = get_diff_status(peaks_diff, mean_size, bias)
                 trust[i] = -12
-            elif diff_status[i + 1] == 2 and diff_status[i - 1] == 2:
+            elif i > 0 and diff_status[i + 1] == 2 and diff_status[i - 1] == 2:
                 if trust[i] > trust[i+1]:
                     peaks_diff[i + 1] = peaks_diff[i + 1] + peaks_diff[i]
                     peaks_diff[i] = 0
