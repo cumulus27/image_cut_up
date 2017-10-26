@@ -8,11 +8,11 @@ import detect_peaks
 
 # src="/home/py/PycharmProjects/image_process/extract/000048.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000006.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000012.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000824.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000027.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000019.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000118.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000033.jpg"
+src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000055.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000075.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000158.jpg"
@@ -26,7 +26,7 @@ import detect_peaks
 # src="/home/py/PycharmProjects/image_process/extract/000259.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000724.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000063.jpg"
-src = "/home/py/PycharmProjects/image_process/extract/000877.jpg"
+# src = "/home/py/PycharmProjects/image_process/extract/000877.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000067.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000150.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
@@ -139,7 +139,7 @@ mean_size_zeros = np.argmax(counts)
 # print(col_sum_zeros)
 # print(counts+cps*2+1)
 col_bd_zeros = np.where(col_sum_zeros < mean_size_zeros+1)[0]
-print(col_bd_zeros)
+# print(col_bd_zeros)
 
 # col_bd_zeros_diff = np.diff(col_bd_zeros)
 
@@ -304,8 +304,8 @@ col_sum_line1d = np.max(col_sum_line1) - col_sum_line1
 col_sum_line2d = np.max(col_sum_line2) - col_sum_line2
 # plt.plot(col_sum_line1d,'r')
 
-peaks_line1 = signal.find_peaks_cwt(col_sum_line1d, np.arange(1, 12))
-peaks_line2 = signal.find_peaks_cwt(col_sum_line2d, np.arange(1, 12))
+peaks_line1 = signal.find_peaks_cwt(col_sum_line1d, np.arange(1, 14))
+peaks_line2 = signal.find_peaks_cwt(col_sum_line2d, np.arange(1, 14))
 
 # peaks_line1 = detect_peaks.detect_peaks(col_sum_line1d, mph=300, mpd=3, threshold=10)
 # peaks_line2 = detect_peaks.detect_peaks(col_sum_line2d, mph=300, mpd=3, threshold=10)
@@ -367,6 +367,8 @@ print(grayline1.shape)
 print(col_sum_line1d.shape)
 print(grayline2.shape)
 print(col_sum_line2d.shape)
+cv2.imshow('size confirm grayline1',grayline1)
+cv2.imshow('size confirm grayline2',grayline2)
 # peaks_high1 = col_sum_line1d[peaks_line1]
 # peaks_high2 = col_sum_line1d[peaks_line2]
 
@@ -455,11 +457,16 @@ def merge_mser_line(mser_line1, mser_line2, mean_size):
                 # print(i)
             elif mser_line2[i-1] - mser_line1[i] > bias:
                 print("warning!!! MSER结果出现交叉重叠！！")
+                print(i)
                 if i < len(mser_line1) - 1 and i-1 > 0:
-                    af = mser_line1[i-1] - mser_line2[i-2]
-                    bf = mser_line1[i] - mser_line2[i - 2]
-                    ap = mser_line1[i + 1] - mser_line2[i - 1]
-                    bp = mser_line1[i+1] - mser_line2[i]
+                    af = abs(mser_line1[i-1] - mser_line2[i-2])
+                    bf = abs(mser_line1[i] - mser_line2[i - 2])
+                    ap = abs(mser_line1[i + 1] - mser_line2[i - 1])
+                    bp = abs(mser_line1[i + 1] - mser_line2[i])
+                    afh = abs(mser_line1[i-1] - mser_line1[i-2])
+                    bfh = abs(mser_line1[i] - mser_line1[i - 2])
+                    aph = abs(mser_line1[i + 1] - mser_line1[i - 1])
+                    bph = abs(mser_line1[i + 1] - mser_line1[i])
                     if af <= bias or ap <= bias:
                         if bf > bias and bp > bias:
                             # 认为i-1是正确位置，除掉i
@@ -469,6 +476,29 @@ def merge_mser_line(mser_line1, mser_line2, mean_size):
                         else:
                             print('warning!!! 两个位置都有非常接近的相邻块')
                             print(i)
+                            if af < bias and bf < bias:
+                                if afh > bfh:
+                                    # 认为i-1是正确位置，除掉i
+                                    mser_line1[i] = mser_line1[i - 1]
+                                    mser_line2[i] = mser_line2[i - 1]
+                                    delete[i] = 1
+                                else:
+                                    # 认为i是正确位置，除掉i-1
+                                    mser_line1[i - 1] = mser_line1[i]
+                                    mser_line2[i - 1] = mser_line2[i]
+                            elif ap < bias and bp < bias:
+                                if aph > bph:
+                                    # 认为i-1是正确位置，除掉i
+                                    mser_line1[i] = mser_line1[i - 1]
+                                    mser_line2[i] = mser_line2[i - 1]
+                                    delete[i] = 1
+                                else:
+                                    # 认为i是正确位置，除掉i-1
+                                    mser_line1[i - 1] = mser_line1[i]
+                                    mser_line2[i - 1] = mser_line2[i]
+                            else:
+                                print('出现设定外情景，请检查！！')
+
                     elif bf <= bias or bp <= bias:
                         if af > bias and ap > bias:
                             # 认为i是正确位置，除掉i-1
@@ -477,6 +507,28 @@ def merge_mser_line(mser_line1, mser_line2, mean_size):
                         else:
                             print('warning!!! 两个位置都有非常接近的相邻块')
                             print(i)
+                            if af < bias and bf < bias:
+                                if afh > bfh:
+                                    # 认为i-1是正确位置，除掉i
+                                    mser_line1[i] = mser_line1[i - 1]
+                                    mser_line2[i] = mser_line2[i - 1]
+                                    delete[i] = 1
+                                else:
+                                    # 认为i是正确位置，除掉i-1
+                                    mser_line1[i - 1] = mser_line1[i]
+                                    mser_line2[i - 1] = mser_line2[i]
+                            elif ap < bias and bp < bias:
+                                if aph > bph:
+                                    # 认为i-1是正确位置，除掉i
+                                    mser_line1[i] = mser_line1[i - 1]
+                                    mser_line2[i] = mser_line2[i - 1]
+                                    delete[i] = 1
+                                else:
+                                    # 认为i是正确位置，除掉i-1
+                                    mser_line1[i - 1] = mser_line1[i]
+                                    mser_line2[i - 1] = mser_line2[i]
+                            else:
+                                print('出现设定外情景，请检查！！')
                     else:
                         # 两个位置都没有相邻的块来判断 用余数决胜负
                         afy = af % mean_size
@@ -499,8 +551,10 @@ def merge_mser_line(mser_line1, mser_line2, mean_size):
                             print('warning!!余数相同无法判断')
                             print(i)
                 elif i-1 > 0:
-                    af = mser_line1[i - 1] - mser_line2[i - 2]
-                    bf = mser_line1[i] - mser_line2[i - 2]
+                    af = abs(mser_line1[i - 1] - mser_line2[i - 2])
+                    bf = abs(mser_line1[i] - mser_line2[i - 2])
+                    afh = abs(mser_line1[i - 1] - mser_line1[i - 2])
+                    bfh = abs(mser_line1[i] - mser_line1[i - 2])
                     if af <= bias:
                         if bf > bias:
                             # 认为i-1是正确位置，除掉i
@@ -510,6 +564,15 @@ def merge_mser_line(mser_line1, mser_line2, mean_size):
                         else:
                             print('warning!!! 两个位置都有非常接近的相邻块')
                             print(i)
+                            if afh > bfh:
+                                # 认为i-1是正确位置，除掉i
+                                mser_line1[i] = mser_line1[i - 1]
+                                mser_line2[i] = mser_line2[i - 1]
+                                delete[i] = 1
+                            else:
+                                # 认为i是正确位置，除掉i-1
+                                mser_line1[i - 1] = mser_line1[i]
+                                mser_line2[i - 1] = mser_line2[i]
                     elif bf <= bias:
                         if af > bias:
                             # 认为i是正确位置，除掉i-1
@@ -519,6 +582,16 @@ def merge_mser_line(mser_line1, mser_line2, mean_size):
                         else:
                             print('warning!!! 两个位置都有非常接近的相邻块')
                             print(i)
+                            if afh > bfh:
+                                # 认为i-1是正确位置，除掉i
+                                mser_line1[i] = mser_line1[i - 1]
+                                mser_line2[i] = mser_line2[i - 1]
+                                delete[i] = 1
+                            else:
+                                # 认为i是正确位置，除掉i-1
+                                mser_line1[i - 1] = mser_line1[i]
+                                mser_line2[i - 1] = mser_line2[i]
+
                     else:
                         # 两个位置都没有相邻的块来判断 用余数决胜负
                         afy = af % mean_size
@@ -536,11 +609,72 @@ def merge_mser_line(mser_line1, mser_line2, mean_size):
                         else:
                             print('warning!!余数相同无法判断')
                             print(i)
+                elif i < len(mser_line1) - 1:
+                    ap = abs(mser_line1[i + 1] - mser_line2[i - 1])
+                    bp = abs(mser_line1[i + 1] - mser_line2[i])
+                    aph = abs(mser_line1[i + 1] - mser_line1[i - 1])
+                    bph = abs(mser_line1[i + 1] - mser_line1[i])
+                    if ap <= bias:
+                        if bp > bias:
+                            # 认为i-1是正确位置，除掉i
+                            mser_line1[i] = mser_line1[i - 1]
+                            mser_line2[i] = mser_line2[i - 1]
+                            delete[i] = 1
+                        else:
+                            print('warning!!! 两个位置都有非常接近的相邻块')
+                            print(i)
+                            if aph > bph:
+                                # 认为i-1是正确位置，除掉i
+                                mser_line1[i] = mser_line1[i - 1]
+                                mser_line2[i] = mser_line2[i - 1]
+                                delete[i] = 1
+                            else:
+                                # 认为i是正确位置，除掉i-1
+                                mser_line1[i - 1] = mser_line1[i]
+                                mser_line2[i - 1] = mser_line2[i]
+                    elif bp <= bias:
+                        if ap > bias:
+                            # 认为i是正确位置，除掉i-1
+                            mser_line1[i - 1] = mser_line1[i]
+                            mser_line2[i - 1] = mser_line2[i]
+                            delete[i - 1] = 1
+                        else:
+                            print('warning!!! 两个位置都有非常接近的相邻块')
+                            print(i)
+                            if aph > bph:
+                                # 认为i-1是正确位置，除掉i
+                                mser_line1[i] = mser_line1[i - 1]
+                                mser_line2[i] = mser_line2[i - 1]
+                                delete[i] = 1
+                            else:
+                                # 认为i是正确位置，除掉i-1
+                                mser_line1[i - 1] = mser_line1[i]
+                                mser_line2[i - 1] = mser_line2[i]
+                    else:
+                        # 两个位置都没有相邻的块来判断 用余数决胜负
+                        apy = ap % mean_size
+                        bpy = bp % mean_size
+                        if apy > bpy:
+                            # 认为i是正确位置，除掉i-1
+                            mser_line1[i - 1] = mser_line1[i]
+                            mser_line2[i - 1] = mser_line2[i]
+                            delete[i-1] = 1
+                        elif bpy > apy:
+                            # 认为i-1是正确位置，除掉i
+                            mser_line1[i] = mser_line1[i - 1]
+                            mser_line2[i] = mser_line2[i - 1]
+                            delete[i] = 1
+                        else:
+                            print('warning!!余数相同无法判断')
+                            print(i)
+                else:
+                    print('warning!!!未知情景，请检查！')
 
     print(mser_line1)
     print(mser_line2)
-    mser_line1 = [i for i in mser_line1 if i != -1]
-    mser_line2 = [i for i in mser_line2 if i != -1]
+    print(delete)
+    mser_line1 = [i for i,j in zip(mser_line1, delete) if i != -1 and j != 1]
+    mser_line2 = [i for i,j in zip(mser_line2, delete) if i != -1 and j != 1]
     print(mser_line1)
     print(mser_line2)
     return mser_line1, mser_line2
@@ -615,21 +749,21 @@ diff_queue = diff_queue[np.where(diff_queue < 16)]
 
 # mean_size = np.mean(diff_queue)
 # mean_size = np.median(diff_queue)
-mean_size = (np.mean(mser_diff1) + np.mean(mser_diff2))/2+2
+mean_size = (np.mean(mser_diff1) + np.mean(mser_diff2))/2+2.5
 
 
 # 众数做参考值
 # counts = np.bincount(diff_queue)
 # mean_size = np.argmax(counts)
 
-trust1 = np.zeros(peaks_line1.shape)
-trust2 = np.zeros(peaks_line2.shape)
+trust1 = np.ones(peaks_line1.shape)*4
+trust2 = np.ones(peaks_line2.shape)*4
 
 num = 16
 # mean_size = round(gray.shape[1]/num)
 print('参考宽度：')
 print(mean_size)
-bias = round(mean_size * 0.22)
+bias = round(mean_size * 0.25)
 
 
 def get_diff_status(peaks_diff, mean_size, bias):
@@ -673,7 +807,7 @@ def get_neighber_trust(trust, peaks_diff, diff_status):
             neighbers[i] += 1
             neighbers[i + 1] += 1
 
-    trust = neighbers * 0.4 + trust
+    trust = neighbers * 4 + trust
     return trust
 
 
@@ -694,9 +828,9 @@ def combine_the_two_way(peaks_line, mser_line1, mser_line2, trust):
             i += 1
 
         if abs(mser_line1[i] - line) < bias or abs(mser_line2[i] - line) < bias:
-            trust[j] += 0.8
+            trust[j] += 8
         elif line - mser_line1[i] > bias + 1 and mser_line2[i] - line > bias + 1:
-            trust[j] -= 0.9
+            trust[j] -= 9
 
     return trust
 
@@ -723,10 +857,10 @@ def get_self_trust(trust, grayline, peaks_line, thresholdh, thresholdl):
     for i in range(len(trust)):
         if part1[i] > 200 and part3[i] > 200:
             if part2[i] < 200:
-                if trust[i] < 0.8:
-                    trust[i] -= 0.8
+                if trust[i] < 8:
+                    trust[i] -= 8
                 else:
-                    trust[i] -= 0.5
+                    trust[i] -= 5
                 # print('Get one zero:')
                 # print(i)
                 # print(peaks_line[i])
@@ -735,7 +869,7 @@ def get_self_trust(trust, grayline, peaks_line, thresholdh, thresholdl):
                 # print(part3[i])
                 # print(grayline[:,peaks_line[i]])
             else:
-                trust[i] *= 0.5
+                trust[i] = trust[i] // 2
 
     return trust
 
@@ -759,13 +893,13 @@ def delete_zeros(line_result, trust):
     return line_result
 
 
-peaks_diff1 = delete_zeros(peaks_diff1, trust1)
-peaks_diff2 = delete_zeros(peaks_diff2, trust2)
-
-trust1 = trust1[np.where(trust1 >= 0)]
-trust2 = trust2[np.where(trust2 >= 0)]
-peaks_diff1 = peaks_diff1[np.where(peaks_diff1 > 0)]
-peaks_diff2  = peaks_diff2[np.where(peaks_diff2 > 0)]
+# peaks_diff1 = delete_zeros(peaks_diff1, trust1)
+# peaks_diff2 = delete_zeros(peaks_diff2, trust2)
+#
+# trust1 = trust1[np.where(trust1 >= 0)]
+# trust2 = trust2[np.where(trust2 >= 0)]
+# peaks_diff1 = peaks_diff1[np.where(peaks_diff1 > 0)]
+# peaks_diff2  = peaks_diff2[np.where(peaks_diff2 > 0)]
 
 diff_status1 = get_diff_status(peaks_diff1, mean_size, bias)
 diff_status2 = get_diff_status(peaks_diff2, mean_size, bias)
@@ -779,6 +913,75 @@ print(diff_status1)
 print(diff_status2)
 
 
+
+def get_distrubute_trust(peaks_line, trust, peaks_diff, bd_diff, diff_status, mean_size):
+
+    for i,line in enumerate(peaks_line):
+        if i > 0 and i < len(peaks_line)-1:
+            if diff_status[i-1] == 1 and diff_status[i] == 1:
+                # 两边的分块都偏小 降低置信度
+                trust[i] -= 2
+                if i > 1 and diff_status[i-2] == 1:
+                    if peaks_line[i+1] - peaks_line[i-2] > mean_size + 3:
+                        if bd_diff[i-1] > bd_diff[i]:
+                            trust[i-1] -= 4
+                        else:
+                            trust[i] -= 4
+                    else:
+                        trust[i - 1] -= 4
+                        trust[i] -= 4
+            elif diff_status[i-1] == 1 and diff_status[i] == 0:
+                trust[i] -= 1
+            elif diff_status[i - 1] == 0 and diff_status[i] == 1:
+                trust[i] -= 1
+            elif diff_status[i - 1] == 2 and diff_status[i] == 0:
+                trust[i] -= 1
+            elif diff_status[i - 1] == 0 and diff_status[i] == 2:
+                trust[i] -= 1
+            elif diff_status[i - 1] == 2 and diff_status[i] == 2:
+                trust[i] -= 2
+            elif diff_status[i - 1] == 0 and diff_status[i] == 0:
+                trust[i] += 1
+
+    return trust
+
+
+trust1 = get_distrubute_trust(peaks_line1, trust1, peaks_diff1, bd_diff1, diff_status1, mean_size)
+trust2 = get_distrubute_trust(peaks_line2, trust2, peaks_diff2, bd_diff2, diff_status2, mean_size)
+
+print('get_distrubute_trust:')
+print(peaks_diff1)
+print(peaks_diff2)
+print(trust1)
+print(trust2)
+print(diff_status1)
+print(diff_status2)
+
+
+peaks_line1 = peaks_line1[np.where(trust1 >= 0)]
+peaks_line2 = peaks_line2[np.where(trust2 >= 0)]
+trust1 = trust1[np.where(trust1 >= 0)]
+trust2 = trust2[np.where(trust2 >= 0)]
+peaks_diff1 = np.diff(peaks_line1)
+peaks_diff2 = np.diff(peaks_line2)
+diff_status1 = get_diff_status(peaks_diff1, mean_size, bias)
+diff_status2 = get_diff_status(peaks_diff2, mean_size, bias)
+
+
+print('Delete zeros line:')
+print(peaks_line1)
+print(peaks_line2)
+print(trust1)
+print(trust2)
+print(peaks_diff1)
+print(peaks_diff2)
+print(diff_status1)
+print(diff_status2)
+
+
+
+
+'''
 def handle_small_diff(trust, peaks_diff, diff_status, mean_size, bias):
     n = len(peaks_diff)
     for i in range(n):
@@ -874,7 +1077,7 @@ trust2, peaks_diff2, diff_status2 = handle_small_diff(trust2, peaks_diff2, diff_
 print('第一轮之后的trust:')
 print(trust1)
 print(trust2)
-
+'''
 
 def handle_big_diff(trust, peaks_diff, diff_status, mean_size, bias):
     sl = mean_size - bias - 1
@@ -916,9 +1119,9 @@ peaks_diff2 = handle_big_diff(trust2, peaks_diff2, diff_status2, mean_size, bias
 line1_result = peaks_diff1[np.where(peaks_diff1 > 0)]
 line2_result = peaks_diff2[np.where(peaks_diff2 > 0)]
 
-print('result:')
-print(line1_result)
-print(line2_result)
+# print('result:')
+# print(line1_result)
+# print(line2_result)
 
 
 # 两个连续偏大情况纠错
@@ -953,13 +1156,13 @@ def three2two_err_fix(line_result, num, mean_size, bias):
     return line_result
 
 
-line1_result = three2two_err_fix(line1_result, num, mean_size, bias)
-line2_result = three2two_err_fix(line2_result, num, mean_size, bias)
-
-print('修正3to2bug后：')
-print(line1_result)
-print(line2_result)
-
+# line1_result = three2two_err_fix(line1_result, num, mean_size, bias)
+# line2_result = three2two_err_fix(line2_result, num, mean_size, bias)
+#
+# print('修正3to2bug后：')
+# print(line1_result)
+# print(line2_result)
+#
 # 连续两个一个偏大一个偏小情况纠正
 diff_status1 = get_diff_status(line1_result, mean_size, bias)
 diff_status2 = get_diff_status(line2_result, mean_size, bias)
@@ -1021,11 +1224,11 @@ print(line1_result)
 print(line2_result)
 
 # 连续三个小于平均数
-diff_status1 = get_diff_status(line1_result, mean_size, 0)
-diff_status2 = get_diff_status(line2_result, mean_size, 0)
-print('result status:')
-print(diff_status1)
-print(diff_status2)
+# diff_status1 = get_diff_status(line1_result, mean_size, 0)
+# diff_status2 = get_diff_status(line2_result, mean_size, 0)
+# print('result status:')
+# print(diff_status1)
+# print(diff_status2)
 
 
 def small_small_small_fix(line_result, diff_status):
@@ -1052,11 +1255,11 @@ def small_small_small_fix(line_result, diff_status):
 # print(line2_result)
 
 # 连续三个小于平均数
-diff_status1 = get_diff_status(line1_result, mean_size, 0)
-diff_status2 = get_diff_status(line2_result, mean_size, 0)
-print('result status:')
-print(diff_status1)
-print(diff_status2)
+# diff_status1 = get_diff_status(line1_result, mean_size, 0)
+# diff_status2 = get_diff_status(line2_result, mean_size, 0)
+# print('result status:')
+# print(diff_status1)
+# print(diff_status2)
 
 
 def small_small_fix(line_result, diff_status):
