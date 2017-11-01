@@ -6,13 +6,15 @@ import scipy.signal as signal
 from skimage import data, draw, color, transform, feature
 import detect_peaks
 
+# src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000048.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000006.jpg"
+src="/home/py/PycharmProjects/image_process/extract/000012.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000824.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000027.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000019.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000118.jpg"
-src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000055.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000075.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000158.jpg"
@@ -759,6 +761,69 @@ mean_size = (np.mean(mser_diff1) + np.mean(mser_diff2))/2+2.5
 trust1 = np.ones(peaks_line1.shape)*4
 trust2 = np.ones(peaks_line2.shape)*4
 
+
+# 模板匹配
+img2 = grayline2od
+template1 = cv2.imread("/home/py/PycharmProjects/mould0/012_1_2.jpg", 0)
+template2 = cv2.imread("/home/py/PycharmProjects/mould0/877_2_1.jpg", 0)
+template3 = cv2.imread("/home/py/PycharmProjects/mould0/003_2_1.jpg", 0)
+template4 = cv2.imread("/home/py/PycharmProjects/mould0/003_2_6_1.jpg", 0)
+template5 = cv2.imread("/home/py/PycharmProjects/mould0/012_2_3_1.jpg", 0)
+template6 = cv2.imread("/home/py/PycharmProjects/mould0/877_1_1_1.jpg", 0)
+template_list = ['template1', 'template2', 'template3', 'template4', 'template5', 'template6']
+
+# methods = ['cv2.TM_CCOEFF_NORMED',
+#            'cv2.TM_CCORR_NORMED', 'cv2.TM_SQDIFF', 'cv2.TM_SQDIFF_NORMED']
+
+methods = 'cv2.TM_SQDIFF_NORMED'
+
+for temp in template_list:
+    template = eval(temp)
+    print(template.shape)
+    ww, hh = template.shape[::-1]
+
+    img = img2.copy()
+    method = eval(methods)
+    res = cv2.matchTemplate(img, template, method)
+    print('模板匹配结果：')
+    print(res)
+
+    min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+    i = 0
+
+    if method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
+        threshold = 0.1
+        loc = np.where(res <= threshold)
+        for pt in zip(*loc[::-1]):
+            i += 1
+            cv2.rectangle(img, pt, (pt[0] + ww, pt[1] + hh), 255, 2)
+        # while
+    else:
+        threshold = 0.9
+        loc = np.where(res >= threshold)
+        for pt in zip(*loc[::-1]):
+            i += 1
+            cv2.rectangle(img, pt, (pt[0] + ww, pt[1] + hh), 255, 2)
+    # bottom_right = (top_left[0] + ww, top_left[1] + hh)
+    # cv2.rectangle(img, top_left, bottom_right, 255, 2)
+
+    print(methods)
+    print('个数：')
+    print(i)
+    plt.subplot(221), plt.imshow(img2, cmap="gray")
+    plt.title('Original Image'), plt.xticks([]), plt.yticks([])
+    plt.subplot(222), plt.imshow(template, cmap="gray")
+    plt.title('template Image'), plt.xticks([]), plt.yticks([])
+    plt.subplot(223), plt.imshow(res, cmap="gray")
+    plt.title('Matching Result'), plt.xticks([]), plt.yticks([])
+    plt.subplot(224), plt.imshow(img, cmap="gray")
+    plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
+    plt.show()
+
+
+
+
+
 num = 16
 # mean_size = round(gray.shape[1]/num)
 print('参考宽度：')
@@ -1310,9 +1375,23 @@ print('result status:')
 print(diff_status1)
 print(diff_status2)
 
-plt.plot(col_sum_line1d, 'b')
+'''
+#  保存模板
+cv2.destroyAllWindows()
+oooooo = grayline1od
+cv2.imshow('mould', oooooo)
+mould = oooooo[7:25,169:179]
+cv2.imshow('result', mould)
+# mould = np.uint8(mould)
+cv2.imwrite("/home/py/PycharmProjects/mould0/877_1_1_1.jpg", mould, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+'''
+
+# plt.plot(col_sum_line1d, 'b')
 # plt.plot(col_sum_line1,'r')
-plt.show()
+# plt.show()
+
+
+
 
 
 cv2.waitKey(0)
