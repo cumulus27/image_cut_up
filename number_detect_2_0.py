@@ -763,14 +763,113 @@ trust2 = np.ones(peaks_line2.shape)*4
 
 
 # 模板匹配
+def mould_detect(img2, template, methods):
+    ww, hh = template.shape[::-1]
+    img = img2.copy()
+    method = eval(methods)
+    res = cv2.matchTemplate(img, template, method)
+    # print('模板匹配结果：')
+    # print(res)
+    loc_f = []
+    loc_p = []
+
+    i = 0
+    if method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
+        threshold = 0.1
+        loc = np.where(res <= threshold)
+        for pt in zip(*loc[::-1]):
+            loc_f.append(pt[0])
+            loc_p.append(pt[0] + ww)
+            i += 1
+            cv2.rectangle(img, pt, (pt[0] + ww, pt[1] + hh), 255, 2)
+            # while
+    else:
+        threshold = 0.9
+        loc = np.where(res >= threshold)
+        for pt in zip(*loc[::-1]):
+            loc_f.append(pt[0])
+            loc_p.append(pt[0] + ww)
+            i += 1
+            cv2.rectangle(img, pt, (pt[0] + ww, pt[1] + hh), 255, 2)
+
+    print(methods)
+    print('个数：')
+    print(i)
+    '''
+    plt.subplot(221), plt.imshow(img2, cmap="gray")
+    plt.title('Original Image'), plt.xticks([]), plt.yticks([])
+    plt.subplot(222), plt.imshow(template, cmap="gray")
+    plt.title('template Image'), plt.xticks([]), plt.yticks([])
+    plt.subplot(223), plt.imshow(res, cmap="gray")
+    plt.title('Matching Result'), plt.xticks([]), plt.yticks([])
+    plt.subplot(224), plt.imshow(img, cmap="gray")
+    plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
+    plt.show()
+    '''
+    # 重复过滤
+    loc_f2 = []
+    loc_p2 = []
+    bias = 4
+    for f,p in zip(loc_f, loc_p):
+        flag = 0
+        for i,j in zip(loc_f2, loc_p2):
+            if abs(f-i) < bias and abs(p-j) < bias:
+                flag = 1
+            elif abs(f-i) < bias or abs(p-j) < bias:
+                print('err!!! 模板匹配结果存在错误！ ')
+
+        if flag == 0:
+            loc_f2.append(f)
+            loc_p2.append(p)
+
+    return loc_f2, loc_p2
+
+
+
+def detect_number(img2):
+    # tempNum = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    tempNum = ['0', '1']
+    line_number_f = []
+    line_number_p = []
+    for num in tempNum:
+        line_number_f0 = []
+        line_number_p0 = []
+        template1 = cv2.imread("/home/py/PycharmProjects/image_cut_up/mould/{}/001.jpg".format(num), 0)
+        template2 = cv2.imread("/home/py/PycharmProjects/image_cut_up/mould/{}/002.jpg".format(num), 0)
+        template3 = cv2.imread("/home/py/PycharmProjects/image_cut_up/mould/{}/003.jpg".format(num), 0)
+        template_list = ['template1', 'template2', 'template3']
+        methods = 'cv2.TM_SQDIFF_NORMED'
+        for temp in template_list:
+            template = eval(temp)
+            lf, lp = mould_detect(img2, template, methods)
+            line_number_f0.append(lf)
+            line_number_p0.append(lp)
+
+        line_number_f.append(line_number_f0)
+        line_number_p.append(line_number_p0)
+
+    return line_number_f, line_number_p
+
+
+line_number_f1, line_number_p1 =  detect_number(grayline1od)
+line_number_f2, line_number_p2 =  detect_number(grayline2od)
+
+print('数字模板匹配结果：')
+print(line_number_f1)
+print(line_number_p1)
+print(line_number_f2)
+print(line_number_p2)
+
+
+'''
 img2 = grayline2od
-template1 = cv2.imread("/home/py/PycharmProjects/mould0/012_1_2.jpg", 0)
-template2 = cv2.imread("/home/py/PycharmProjects/mould0/877_2_1.jpg", 0)
-template3 = cv2.imread("/home/py/PycharmProjects/mould0/003_2_1.jpg", 0)
-template4 = cv2.imread("/home/py/PycharmProjects/mould0/003_2_6_1.jpg", 0)
-template5 = cv2.imread("/home/py/PycharmProjects/mould0/012_2_3_1.jpg", 0)
-template6 = cv2.imread("/home/py/PycharmProjects/mould0/877_1_1_1.jpg", 0)
-template_list = ['template1', 'template2', 'template3', 'template4', 'template5', 'template6']
+# template1 = cv2.imread("/home/py/PycharmProjects/mould0/012_1_2.jpg", 0)
+# template2 = cv2.imread("/home/py/PycharmProjects/mould0/877_2_1.jpg", 0)
+# template3 = cv2.imread("/home/py/PycharmProjects/mould0/003_2_1.jpg", 0)
+# template4 = cv2.imread("/home/py/PycharmProjects/mould0/003_2_6_1.jpg", 0)
+# template5 = cv2.imread("/home/py/PycharmProjects/mould0/012_2_3_1.jpg", 0)
+# template6 = cv2.imread("/home/py/PycharmProjects/mould0/877_1_1_1.jpg", 0)
+# template_list = ['template1', 'template2', 'template3', 'template4', 'template5', 'template6']
 
 # methods = ['cv2.TM_CCOEFF_NORMED',
 #            'cv2.TM_CCORR_NORMED', 'cv2.TM_SQDIFF', 'cv2.TM_SQDIFF_NORMED']
@@ -819,7 +918,7 @@ for temp in template_list:
     plt.subplot(224), plt.imshow(img, cmap="gray")
     plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
     plt.show()
-
+'''
 
 
 
@@ -947,6 +1046,7 @@ print('Second Trust:')
 print(trust1)
 print(trust2)
 
+'''
 def delete_zeros(line_result, trust):
 
     for i, status in enumerate(trust):
@@ -976,7 +1076,7 @@ print(trust1)
 print(trust2)
 print(diff_status1)
 print(diff_status2)
-
+'''
 
 
 def get_distrubute_trust(peaks_line, trust, peaks_diff, bd_diff, diff_status, mean_size):
@@ -1021,6 +1121,10 @@ print(trust1)
 print(trust2)
 print(diff_status1)
 print(diff_status2)
+
+# 从模板匹配的结果对 置信度进行最后的筛选
+
+
 
 
 peaks_line1 = peaks_line1[np.where(trust1 >= 0)]
