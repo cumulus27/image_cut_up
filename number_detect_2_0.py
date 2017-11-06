@@ -9,7 +9,7 @@ import detect_peaks
 # src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000048.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000006.jpg"
-src="/home/py/PycharmProjects/image_process/extract/000012.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000012.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000824.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000027.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000019.jpg"
@@ -28,7 +28,7 @@ src="/home/py/PycharmProjects/image_process/extract/000012.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000259.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000724.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000063.jpg"
-# src = "/home/py/PycharmProjects/image_process/extract/000877.jpg"
+src = "/home/py/PycharmProjects/image_process/extract/000877.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000067.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000150.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
@@ -795,7 +795,7 @@ def mould_detect(img2, template, methods):
     print(methods)
     print('个数：')
     print(i)
-    '''
+
     plt.subplot(221), plt.imshow(img2, cmap="gray")
     plt.title('Original Image'), plt.xticks([]), plt.yticks([])
     plt.subplot(222), plt.imshow(template, cmap="gray")
@@ -805,7 +805,7 @@ def mould_detect(img2, template, methods):
     plt.subplot(224), plt.imshow(img, cmap="gray")
     plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
     plt.show()
-    '''
+
     # 重复过滤
     loc_f2 = []
     loc_p2 = []
@@ -853,6 +853,32 @@ def detect_number(img2):
 
 line_number_f1, line_number_p1 =  detect_number(grayline1od)
 line_number_f2, line_number_p2 =  detect_number(grayline2od)
+
+
+def mould_result_filter(line_number_f, line_number_p):
+    line_number_sf = []
+    line_number_sp = []
+    maxnum = 6
+
+    for singlef, singlep in zip(line_number_f, line_number_p):
+        choice = 0
+        current = 0
+        print(singlef)
+        for i,point in enumerate(singlef):
+            if len(point) > current and len(point) <= maxnum:
+                choice = i
+
+        print('choice:')
+        print(choice)
+
+        line_number_sf.append(sort(singlef[choice]))
+        line_number_sp.append(sort(singlep[choice]))
+
+    return line_number_sf, line_number_sp
+
+
+line_number_sf1, line_number_sp1 = mould_result_filter(line_number_f1, line_number_p1)
+line_number_sf2, line_number_sp2 = mould_result_filter(line_number_f2, line_number_p2)
 
 print('数字模板匹配结果：')
 print(line_number_f1)
@@ -1123,9 +1149,35 @@ print(diff_status1)
 print(diff_status2)
 
 # 从模板匹配的结果对 置信度进行最后的筛选
+def merge_mould_result(peaks_line, trust, line_number_f, line_number_p, mean_size):
+    for singlef, singlep in zip(line_number_f, line_number_p):
+        i = 0
+        print(singlef)
+        if len(singlef) == 0:
+            continue
+        for j, line in enumerate(peaks_line):
+            while i < len(singlef) - 1 and line > singlef[i + 1]:
+                i += 1
+
+            if abs(singlef[i] - line) < bias or abs(singlep[i] - line) < bias:
+                trust[j] += 18
+            elif line - singlef[i] > bias and singlep[i] - line > bias:
+                trust[j] -= 19
+            elif singlef[i] - line > bias+1 and singlef[i] - line < mean_size - 4:
+                trust[j] -= 8
+            elif line - singlef[i] > bias+1 and line - singlep[i] < mean_size - 4:
+                trust[j] -= 8
+
+    return trust
 
 
 
+print(line_number_sf1)
+trust1 = merge_mould_result(peaks_line1, trust1, line_number_sf1, line_number_sp1, mean_size)
+trust2 = merge_mould_result(peaks_line2, trust2, line_number_sf2, line_number_sp2, mean_size)
+print('融合模板匹配的结果后：')
+print(trust1)
+print(trust2)
 
 peaks_line1 = peaks_line1[np.where(trust1 >= 0)]
 peaks_line2 = peaks_line2[np.where(trust2 >= 0)]
@@ -1137,7 +1189,7 @@ diff_status1 = get_diff_status(peaks_diff1, mean_size, bias)
 diff_status2 = get_diff_status(peaks_diff2, mean_size, bias)
 
 
-print('Delete zeros line:')
+print('删除掉被排除掉的点之后:')
 print(peaks_line1)
 print(peaks_line2)
 print(trust1)
@@ -1150,7 +1202,7 @@ print(diff_status2)
 
 
 
-'''
+
 def handle_small_diff(trust, peaks_diff, diff_status, mean_size, bias):
     n = len(peaks_diff)
     for i in range(n):
@@ -1246,6 +1298,9 @@ trust2, peaks_diff2, diff_status2 = handle_small_diff(trust2, peaks_diff2, diff_
 print('第一轮之后的trust:')
 print(trust1)
 print(trust2)
+line1_result = peaks_diff1[np.where(peaks_diff1 > 0)]
+line2_result = peaks_diff2[np.where(peaks_diff2 > 0)]
+
 '''
 
 def handle_big_diff(trust, peaks_diff, diff_status, mean_size, bias):
@@ -1453,7 +1508,7 @@ def small_small_fix(line_result, diff_status):
 # print('修正small_small bug后：')
 # print(line1_result)
 # print(line2_result)
-
+'''
 
 def show_result(first, line_result, resultRGB, line):
     point = first
