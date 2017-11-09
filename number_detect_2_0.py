@@ -6,7 +6,7 @@ import scipy.signal as signal
 from skimage import data, draw, color, transform, feature
 import detect_peaks
 
-# src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
+src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000048.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000006.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000012.jpg"
@@ -28,7 +28,7 @@ import detect_peaks
 # src="/home/py/PycharmProjects/image_process/extract/000259.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000724.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000063.jpg"
-src = "/home/py/PycharmProjects/image_process/extract/000877.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000877.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000067.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000150.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
@@ -96,15 +96,17 @@ gmean = np.mean(g[np.where(gray > th_val)])
 kb = (rmean + gmean + bmean) / (3 * bmean)
 kr = (rmean + gmean + bmean) / (3 * rmean)
 kg = (rmean + gmean + bmean) / (3 * gmean)
-br = r * kr
-bg = g * kg
-bb = b * kb
-
+br = np.uint16(r) * kr
+bg = np.uint16(g) * kg
+bb = np.uint16(b) * kb
 balRGB = cv2.merge([bb, bg, br])
+balRGB[np.where(balRGB > 255)] = 255
+
+
 balRGB = np.uint8(balRGB)
 cv2.imshow('BalRGB ', balRGB)
-balRGB = cv2.medianBlur(balRGB, 3)
-cv2.imshow('mediaBalRGB ', balRGB)
+# balRGB = cv2.medianBlur(balRGB, 3)
+# cv2.imshow('mediaBalRGB ', balRGB)
 
 b, g, r = cv2.split(balRGB)
 
@@ -766,29 +768,27 @@ trust2 = np.ones(peaks_line2.shape)*4
 def mould_detect(img2, template, methods):
     ww, hh = template.shape[::-1]
     img = img2.copy()
+    imgf = img2.copy()
     method = eval(methods)
     res = cv2.matchTemplate(img, template, method)
     # print('模板匹配结果：')
     # print(res)
-    loc_f = []
-    loc_p = []
+    loc_choice = []
 
     i = 0
     if method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
-        threshold = 0.1
+        threshold = 0.2
         loc = np.where(res <= threshold)
         for pt in zip(*loc[::-1]):
-            loc_f.append(pt[0])
-            loc_p.append(pt[0] + ww)
+            loc_choice.append(pt)
             i += 1
             cv2.rectangle(img, pt, (pt[0] + ww, pt[1] + hh), 255, 2)
             # while
     else:
-        threshold = 0.9
+        threshold = 0.8
         loc = np.where(res >= threshold)
         for pt in zip(*loc[::-1]):
-            loc_f.append(pt[0])
-            loc_p.append(pt[0] + ww)
+            loc_choice.append(pt)
             i += 1
             cv2.rectangle(img, pt, (pt[0] + ww, pt[1] + hh), 255, 2)
 
@@ -796,39 +796,86 @@ def mould_detect(img2, template, methods):
     print('个数：')
     print(i)
 
+    # 重复过滤
+    loc_fc = []
+    loc_f2 = []
+    loc_p2 = []
+
+    bias = 3
+    for x,y in loc_choice:
+        f = x
+        p = x + ww
+        v = res[y,x]
+        flag = 0
+        for i,j in loc_fc:
+            f2 = i
+            p2 = i + ww
+            v2 = res[j,i]
+            if abs(f-f2) < bias and abs(p-p2) < bias:
+                flag = 1
+
+            if f > f2 and p > p2 and p2 - f > 1:
+                # 交叉
+                if v < v2:
+                    # 留下新的
+                    loc_fc.remove((i,j))
+                    flag = 0
+                else:
+                    # 留下旧的
+                    flag = 1
+
+
+            if f < f2 and p < p2 and p - f2 > 1:
+                # 交叉
+                if v < v2:
+                    # 留下新的
+                    loc_fc.remove((i,j))
+                    flag = 0
+                else:
+                    # 留下旧的
+                    flag = 1
+
+            # elif abs(f-i) < bias or abs(p-j) < bias:
+            #     print('err!!! 模板匹配结果存在错误！ ')
+
+        if flag == 0:
+            loc_fc.append((x,y))
+
+
+    for x,y in loc_fc:
+        loc_f2.append(x)
+        loc_p2.append(x+ww)
+        cv2.rectangle(imgf, (x, 1), (x + ww, 1 + imgf.shape[0] - 2), 255, 2)
+
+
+    print('去重之后的个数：')
+    print(len(loc_f2))
+
+
+
     plt.subplot(221), plt.imshow(img2, cmap="gray")
     plt.title('Original Image'), plt.xticks([]), plt.yticks([])
     plt.subplot(222), plt.imshow(template, cmap="gray")
     plt.title('template Image'), plt.xticks([]), plt.yticks([])
-    plt.subplot(223), plt.imshow(res, cmap="gray")
-    plt.title('Matching Result'), plt.xticks([]), plt.yticks([])
-    plt.subplot(224), plt.imshow(img, cmap="gray")
+    # plt.subplot(223), plt.imshow(res, cmap="gray")
+    # plt.title('Matching Result'), plt.xticks([]), plt.yticks([])
+    # plt.subplot(224), plt.imshow(img, cmap="gray")
+    # plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
+    plt.subplot(224), plt.imshow(imgf, cmap="gray")
+    plt.title('Filter Result'), plt.xticks([]), plt.yticks([])
+    plt.subplot(223), plt.imshow(img, cmap="gray")
     plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
+
     plt.show()
 
-    # 重复过滤
-    loc_f2 = []
-    loc_p2 = []
-    bias = 4
-    for f,p in zip(loc_f, loc_p):
-        flag = 0
-        for i,j in zip(loc_f2, loc_p2):
-            if abs(f-i) < bias and abs(p-j) < bias:
-                flag = 1
-            elif abs(f-i) < bias or abs(p-j) < bias:
-                print('err!!! 模板匹配结果存在错误！ ')
-
-        if flag == 0:
-            loc_f2.append(f)
-            loc_p2.append(p)
 
     return loc_f2, loc_p2
 
 
 
 def detect_number(img2):
-    # tempNum = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-    tempNum = ['0', '1']
+    tempNum = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    # tempNum = ['0', '1']
     line_number_f = []
     line_number_p = []
     for num in tempNum:
@@ -841,6 +888,8 @@ def detect_number(img2):
         methods = 'cv2.TM_SQDIFF_NORMED'
         for temp in template_list:
             template = eval(temp)
+            print('当前数字：')
+            print(num)
             lf, lp = mould_detect(img2, template, methods)
             line_number_f0.append(lf)
             line_number_p0.append(lp)
@@ -858,7 +907,7 @@ line_number_f2, line_number_p2 =  detect_number(grayline2od)
 def mould_result_filter(line_number_f, line_number_p):
     line_number_sf = []
     line_number_sp = []
-    maxnum = 6
+    maxnum = 16
 
     for singlef, singlep in zip(line_number_f, line_number_p):
         choice = 0
@@ -1534,16 +1583,6 @@ print('result status:')
 print(diff_status1)
 print(diff_status2)
 
-'''
-#  保存模板
-cv2.destroyAllWindows()
-oooooo = grayline1od
-cv2.imshow('mould', oooooo)
-mould = oooooo[7:25,169:179]
-cv2.imshow('result', mould)
-# mould = np.uint8(mould)
-cv2.imwrite("/home/py/PycharmProjects/mould0/877_1_1_1.jpg", mould, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-'''
 
 # plt.plot(col_sum_line1d, 'b')
 # plt.plot(col_sum_line1,'r')
