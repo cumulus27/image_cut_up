@@ -1,12 +1,13 @@
 import numpy as np
 import cv2
+import os
 from pylab import *
 from matplotlib import pyplot as plt
 import scipy.signal as signal
 from skimage import data, draw, color, transform, feature
 import detect_peaks
-
-src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
+#
+# src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000048.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000006.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000012.jpg"
@@ -36,6 +37,7 @@ src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000041.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000097.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000918.jpg"
+# src="/home/py/PycharmProjects/image_process/extract/000792.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000930.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000926.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000907.jpg"
@@ -63,7 +65,11 @@ src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000463.jpg"
 # src="/home/py/PycharmProjects/image_process/extract/000447.jpg"
 
+# bann = '000792'
+bann = '000003'
+# bann = '000006'
 
+src="/home/py/PycharmProjects/image_process/extract/{}.jpg".format(bann)
 RGB = cv2.imread(src)
 cv2.imshow('RGB', RGB)
 (h, w) = RGB.shape[:2]
@@ -765,7 +771,7 @@ trust2 = np.ones(peaks_line2.shape)*4
 
 
 # 模板匹配
-def mould_detect(img2, template, methods):
+def mould_detect(img2, template, methods, weight):
     ww, hh = template.shape[::-1]
     img = img2.copy()
     imgf = img2.copy()
@@ -777,7 +783,7 @@ def mould_detect(img2, template, methods):
 
     i = 0
     if method in [cv2.TM_SQDIFF, cv2.TM_SQDIFF_NORMED]:
-        threshold = 0.2
+        threshold = weight
         loc = np.where(res <= threshold)
         for pt in zip(*loc[::-1]):
             loc_choice.append(pt)
@@ -785,7 +791,7 @@ def mould_detect(img2, template, methods):
             cv2.rectangle(img, pt, (pt[0] + ww, pt[1] + hh), 255, 2)
             # while
     else:
-        threshold = 0.8
+        threshold = 1 - weight
         loc = np.where(res >= threshold)
         for pt in zip(*loc[::-1]):
             loc_choice.append(pt)
@@ -812,33 +818,51 @@ def mould_detect(img2, template, methods):
             p2 = i + ww
             v2 = res[j,i]
             if abs(f-f2) < bias and abs(p-p2) < bias:
-                flag = 1
+                # flag = 1
+                # break
+                # 交叉
+                if v < v2:
+                    # 留下新的
+                    loc_fc.remove((i, j))
+                    flag = 0
+                    break
 
-            if f > f2 and p > p2 and p2 - f > 1:
+                else:
+                    # 留下旧的
+                    flag = 1
+                    break
+
+            elif f > f2 and p > p2 and p2 - f > 1:
                 # 交叉
                 if v < v2:
                     # 留下新的
                     loc_fc.remove((i,j))
                     flag = 0
+                    break
+
                 else:
                     # 留下旧的
                     flag = 1
+                    break
 
 
-            if f < f2 and p < p2 and p - f2 > 1:
+            elif f < f2 and p < p2 and p - f2 > 1:
                 # 交叉
                 if v < v2:
                     # 留下新的
-                    loc_fc.remove((i,j))
+                    loc_fc.remove((i, j))
                     flag = 0
+                    break
                 else:
                     # 留下旧的
                     flag = 1
+                    break
 
             # elif abs(f-i) < bias or abs(p-j) < bias:
             #     print('err!!! 模板匹配结果存在错误！ ')
 
         if flag == 0:
+            print((x,y))
             loc_fc.append((x,y))
 
 
@@ -850,9 +874,10 @@ def mould_detect(img2, template, methods):
 
     print('去重之后的个数：')
     print(len(loc_f2))
+    print(loc_f2)
+    print(loc_p2)
 
-
-
+    '''
     plt.subplot(221), plt.imshow(img2, cmap="gray")
     plt.title('Original Image'), plt.xticks([]), plt.yticks([])
     plt.subplot(222), plt.imshow(template, cmap="gray")
@@ -867,6 +892,7 @@ def mould_detect(img2, template, methods):
     plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
 
     plt.show()
+    '''
 
 
     return loc_f2, loc_p2
@@ -874,11 +900,15 @@ def mould_detect(img2, template, methods):
 
 
 def detect_number(img2):
-    tempNum = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    # tempNum = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    # tempWeight = [0.25, 0.18, 0.25, 0.25, 0.25, 0.25, 0.3, 0.2, 0.3, 0.3]
+    tempNum = ['0', '6', '8', '9']
+    tempWeight = [0.25, 0.26, 0.28, 0.26]
+    # tempNum = ['0','8']
     # tempNum = ['0', '1']
     line_number_f = []
     line_number_p = []
-    for num in tempNum:
+    for num, weight in zip(tempNum, tempWeight):
         line_number_f0 = []
         line_number_p0 = []
         template1 = cv2.imread("/home/py/PycharmProjects/image_cut_up/mould/{}/001.jpg".format(num), 0)
@@ -888,9 +918,10 @@ def detect_number(img2):
         methods = 'cv2.TM_SQDIFF_NORMED'
         for temp in template_list:
             template = eval(temp)
+            template = cv2.equalizeHist(template)  # 模板直方图均衡
             print('当前数字：')
             print(num)
-            lf, lp = mould_detect(img2, template, methods)
+            lf, lp = mould_detect(img2, template, methods, weight)
             line_number_f0.append(lf)
             line_number_p0.append(lp)
 
@@ -900,8 +931,11 @@ def detect_number(img2):
     return line_number_f, line_number_p
 
 
-line_number_f1, line_number_p1 =  detect_number(grayline1od)
-line_number_f2, line_number_p2 =  detect_number(grayline2od)
+# line_number_f1, line_number_p1 =  detect_number(grayline1od)
+# line_number_f2, line_number_p2 =  detect_number(grayline2od)
+
+line_number_f1, line_number_p1 =  detect_number(grayline1)
+line_number_f2, line_number_p2 =  detect_number(grayline2)
 
 
 def mould_result_filter(line_number_f, line_number_p):
@@ -1228,6 +1262,7 @@ print('融合模板匹配的结果后：')
 print(trust1)
 print(trust2)
 
+
 peaks_line1 = peaks_line1[np.where(trust1 >= 0)]
 peaks_line2 = peaks_line2[np.where(trust2 >= 0)]
 trust1 = trust1[np.where(trust1 >= 0)]
@@ -1251,7 +1286,127 @@ print(diff_status2)
 
 
 
+# 将模板匹配的结果，加入最终结果中
+def add_mould_result(peaks_line, trust, line_number_f, line_number_p, peaks_diff, mean_size):
+    # choice = [6, 8, 9]
+    # choice = [8]
+    choice = [2]
+    line_number_fa = []
+    line_number_pa = []
+    bias = 2
+    count = 0
+    for index in choice:
+        line_number_fa.append(line_number_f[index])
+        line_number_pa.append(line_number_p[index])
 
+    for j, line in enumerate(peaks_diff):
+        if j < len(peaks_diff) and peaks_diff[j] > mean_size *1.5:
+            mefs = []
+            meps = []
+            for singlef, singlep in zip(line_number_fa, line_number_pa):
+                mef = [a for a in singlef if a > peaks_line[j] + bias and a < peaks_line[j + 1] - bias]
+                mep = [a for a in singlep if a > peaks_line[j] + bias and a < peaks_line[j + 1] - bias]
+                mefs += mef
+                meps += mep
+
+            print('模板结果插入候选：')
+            print(mefs)
+            print(meps)
+            xbfp = mefs + meps
+            if len(xbfp) == 1:
+                il = xbfp[0]
+                # if len(mefs) == 0:
+                #     il += 2
+                # else:
+                #     il -= 2
+                print(peaks_line)
+                peaks_line = np.insert(peaks_line, j+1+count, il)
+                trust = np.insert(trust, j+1+count, 5)
+                count += 1
+                print('插入成功：')
+                print(il)
+                print(peaks_line)
+
+            elif len(xbfp) == 2:
+                il = np.mean(xbfp)
+                peaks_line = np.insert(peaks_line, j + 1 + count, il)
+                trust = np.insert(trust, j + 1 + count, 5)
+                count += 1
+                print('插入成功：')
+                print(il)
+
+    return trust, peaks_line
+
+
+
+
+trust1, peaks_line1 = add_mould_result(peaks_line1, trust1, line_number_sf1, line_number_sp1, peaks_diff1, mean_size)
+trust2, peaks_line2 = add_mould_result(peaks_line2, trust2, line_number_sf2, line_number_sp2, peaks_diff2, mean_size)
+
+peaks_diff1 = np.diff(peaks_line1)
+peaks_diff2 = np.diff(peaks_line2)
+diff_status1 = get_diff_status(peaks_diff1, mean_size, bias)
+diff_status2 = get_diff_status(peaks_diff2, mean_size, bias)
+print('插入模板结果之后:')
+print(peaks_line1)
+print(peaks_line2)
+print(trust1)
+print(trust2)
+print(peaks_diff1)
+print(peaks_diff2)
+print(diff_status1)
+print(diff_status2)
+
+
+
+# 若大块分块的中心附近有极小值则添加分界线
+def add_new_peaks_line(peaks_line, trust, col_sum_line, peaks_diff, mean_size):
+    count = 0
+    for j, line in enumerate(peaks_diff):
+        if j < len(peaks_diff) and peaks_diff[j] > mean_size *1.5:
+            part_sum = col_sum_line[peaks_line[j]:peaks_line[j+1]]
+            part_line = detect_peaks.detect_peaks(part_sum, mph=200, mpd=3, threshold=0)
+            if len(part_line) > 0:
+                minl =  peaks_diff[j]
+                med = round((peaks_line[j] + peaks_line[j + 1])/2)
+                cc = med
+                for l in part_line:
+                    if abs(l-med) < minl:
+                        cc = l
+                        minl =  abs(l-med)
+
+                il = cc
+                print(peaks_line)
+                peaks_line = np.insert(peaks_line, j + 1 + count, il)
+                trust = np.insert(trust, j + 1 + count, 5)
+                count += 1
+                print('极小值插入成功：')
+                print(il)
+                print(peaks_line)
+
+    return trust, peaks_line
+
+
+trust1, peaks_line1 = add_new_peaks_line(peaks_line1, trust1, col_sum_line1d, peaks_diff1, mean_size)
+trust2, peaks_line2 = add_new_peaks_line(peaks_line2, trust2, col_sum_line2d, peaks_diff2, mean_size)
+
+peaks_diff1 = np.diff(peaks_line1)
+peaks_diff2 = np.diff(peaks_line2)
+diff_status1 = get_diff_status(peaks_diff1, mean_size, bias)
+diff_status2 = get_diff_status(peaks_diff2, mean_size, bias)
+line1_result = peaks_diff1[np.where(peaks_diff1 > 0)]
+line2_result = peaks_diff2[np.where(peaks_diff2 > 0)]
+print('二次插入极小值结果之后:')
+print(peaks_line1)
+print(peaks_line2)
+print(trust1)
+print(trust2)
+print(peaks_diff1)
+print(peaks_diff2)
+print(diff_status1)
+print(diff_status2)
+
+'''
 def handle_small_diff(trust, peaks_diff, diff_status, mean_size, bias):
     n = len(peaks_diff)
     for i in range(n):
@@ -1350,7 +1505,7 @@ print(trust2)
 line1_result = peaks_diff1[np.where(peaks_diff1 > 0)]
 line2_result = peaks_diff2[np.where(peaks_diff2 > 0)]
 
-'''
+
 
 def handle_big_diff(trust, peaks_diff, diff_status, mean_size, bias):
     sl = mean_size - bias - 1
@@ -1563,6 +1718,8 @@ def show_result(first, line_result, resultRGB, line):
     point = first
     name = 1
     fat = 2
+    if not os.path.exists("/home/py/PycharmProjects/image_cut_up/result/{}".format(bann)):
+        os.makedirs("/home/py/PycharmProjects/image_cut_up/result/{}".format(bann))
     for i in line_result:
         sigleim = resultRGB[:, max(point - fat, 0):min(point + i + fat, resultRGB.shape[1] - 1)]
         # print(point-fat)
@@ -1570,8 +1727,11 @@ def show_result(first, line_result, resultRGB, line):
         # print(resultRGB.shape)
         # print(sigleim.shape)
         cv2.imshow(str(line) + 'sigle' + str(name), sigleim)
+
+        cv2.imwrite("/home/py/PycharmProjects/image_cut_up/result/{}/{}sigle{}.jpg".format(bann, line, name), sigleim, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
         point += i
         name += 1
+
 
 
 show_result(peaks_line1[0], line1_result, resultRGB1, 1)
