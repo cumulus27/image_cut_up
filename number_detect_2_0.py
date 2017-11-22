@@ -66,8 +66,45 @@ import detect_peaks
 # src="/home/py/PycharmProjects/image_process/extract/000447.jpg"
 
 # bann = '000792'
-bann = '000003'
+# bann = '000003'
 # bann = '000006'
+# bann = '000008'
+# bann = '000018'
+# bann = '000027'
+# bann = '000032'
+# bann = '000048'
+# bann = '000120'
+# bann = '000124'
+# bann = '000150'
+# bann = '000167'
+# bann = '000184'
+# bann = '000205'
+# bann = '000207'
+# bann = '000259'
+# bann = '000384'
+# bann = '000442'
+# bann = '000447'
+# bann = '000452'
+# bann = '000476'
+# bann = '000490'
+# bann = '000528'
+# bann = '000532'
+# bann = '000719'
+# bann = '000730'
+# bann = '000764'   #!
+# bann = '000765'   #!
+# bann = '000766'   #!
+# bann = '000778'
+# bann = '000800'
+# bann = '000825'
+# bann = '000828'
+# bann = '000845'
+# bann = '000877'
+bann = '000930'
+
+
+# bann = '000055'
+# bann = '000200'
 
 src="/home/py/PycharmProjects/image_process/extract/{}.jpg".format(bann)
 RGB = cv2.imread(src)
@@ -236,6 +273,13 @@ x0 = gray.shape[0] // 2
 row_sump = row_sum2[x0 - 5:x0 + 6]
 row_bd2 = np.where(row_sum2 == np.min(row_sump))[0][0]  # 隐藏bug 万一有多个值
 
+l1h = row_bd2
+l2h = gray.shape[0] - l1h
+
+if l1h/l2h > 0.65 or l2h/l1h > 0.65:
+    row_bd2 = gray.shape[0] // 2
+
+
 # 截取第一行和第二行
 rdt = 1
 grayline1 = gray[0:row_bd2 + rdt + 1, :]
@@ -314,14 +358,14 @@ col_sum_line1d = np.max(col_sum_line1) - col_sum_line1
 col_sum_line2d = np.max(col_sum_line2) - col_sum_line2
 # plt.plot(col_sum_line1d,'r')
 
-peaks_line1 = signal.find_peaks_cwt(col_sum_line1d, np.arange(1, 14))
-peaks_line2 = signal.find_peaks_cwt(col_sum_line2d, np.arange(1, 14))
+peaks_line1 = signal.find_peaks_cwt(col_sum_line1d, np.arange(1, 40))
+peaks_line2 = signal.find_peaks_cwt(col_sum_line2d, np.arange(1, 40))
 
 # peaks_line1 = detect_peaks.detect_peaks(col_sum_line1d, mph=300, mpd=3, threshold=10)
 # peaks_line2 = detect_peaks.detect_peaks(col_sum_line2d, mph=300, mpd=3, threshold=10)
 
-peaks_line1 = np.concatenate((np.array([0]), peaks_line1, np.array([len(col_sum_line1d) - 1])), axis=0)
-peaks_line2 = np.concatenate((np.array([0]), peaks_line2, np.array([len(col_sum_line2d) - 1])), axis=0)
+peaks_line1 = np.concatenate((np.array([0]), peaks_line1, np.array([len(col_sum_line1d)])), axis=0)
+peaks_line2 = np.concatenate((np.array([0]), peaks_line2, np.array([len(col_sum_line2d)])), axis=0)
 print('第二次局部均衡分界点：')
 print(peaks_line1)
 print(peaks_line2)
@@ -342,6 +386,9 @@ def part_hist(grayline, peaks_line):
 grayline1 = part_hist(grayline1, peaks_line1)
 grayline2 = part_hist(grayline2, peaks_line2)
 
+grayline1 = cv2.medianBlur(grayline1,3)
+grayline2 = cv2.medianBlur(grayline2,3)
+
 cv2.imshow('grayline1 part hist', grayline1)
 cv2.imshow('grayline2 part hist', grayline2)
 
@@ -353,11 +400,36 @@ grayline1hd[np.where(grayline1 < shd)] //= 2
 grayline2hd[np.where(grayline2 < shd)] //= 2
 col_sum_line1 = np.sum(grayline1hd, axis=0)
 col_sum_line2 = np.sum(grayline2hd, axis=0)
+# col_sum_line1 = signal.detrend(col_sum_line1)
+# col_sum_line2 = signal.detrend(col_sum_line2)
+
+def meanfilt(line, ksize):
+    bias = ksize // 2
+    nline = []
+    for i in range(bias):
+        nline.append(line[i])
+    window = sum(line[:ksize])
+    for i, n in enumerate(line):
+        if i > bias - 1 and i < len(line) - bias:
+            nline.append(window)
+            window -= line[i-bias]
+            window += line[i+bias]
+    for i in range(bias):
+        j = i - bias
+        nline.append(line[j])
+        
+    return nline        
+    
+
+                
 
 # 滤波
 ksize = 3
-col_sum_line1 = signal.medfilt(col_sum_line1, ksize)
-col_sum_line2 = signal.medfilt(col_sum_line2, ksize)
+# col_sum_line1 = signal.medfilt(col_sum_line1, ksize)
+# col_sum_line2 = signal.medfilt(col_sum_line2, ksize)
+
+col_sum_line1 = meanfilt(col_sum_line1, ksize)
+col_sum_line2 = meanfilt(col_sum_line2, ksize)
 
 col_sum_line1d = np.max(col_sum_line1) - col_sum_line1
 col_sum_line2d = np.max(col_sum_line2) - col_sum_line2
@@ -377,6 +449,11 @@ print(grayline1.shape)
 print(col_sum_line1d.shape)
 print(grayline2.shape)
 print(col_sum_line2d.shape)
+
+print('原始分界点：')
+print(peaks_line1)
+print(peaks_line2)
+
 cv2.imshow('size confirm grayline1',grayline1)
 cv2.imshow('size confirm grayline2',grayline2)
 # peaks_high1 = col_sum_line1d[peaks_line1]
@@ -757,10 +834,6 @@ diff_queue = np.append(peaks_diff1, peaks_diff2)
 diff_queue = diff_queue[np.where(diff_queue > 8)]
 diff_queue = diff_queue[np.where(diff_queue < 16)]
 
-# mean_size = np.mean(diff_queue)
-# mean_size = np.median(diff_queue)
-mean_size = (np.mean(mser_diff1) + np.mean(mser_diff2))/2+2.5
-
 
 # 众数做参考值
 # counts = np.bincount(diff_queue)
@@ -862,7 +935,7 @@ def mould_detect(img2, template, methods, weight):
             #     print('err!!! 模板匹配结果存在错误！ ')
 
         if flag == 0:
-            print((x,y))
+            # print((x,y))
             loc_fc.append((x,y))
 
 
@@ -895,15 +968,17 @@ def mould_detect(img2, template, methods, weight):
     '''
 
 
+
     return loc_f2, loc_p2
 
 
 
 def detect_number(img2):
-    # tempNum = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-    # tempWeight = [0.25, 0.18, 0.25, 0.25, 0.25, 0.25, 0.3, 0.2, 0.3, 0.3]
-    tempNum = ['0', '6', '8', '9']
-    tempWeight = [0.25, 0.26, 0.28, 0.26]
+    tempNum = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+    tempWeight = [0.30, 0.18, 0.25, 0.25, 0.25, 0.25, 0.3, 0.2, 0.32, 0.3]
+    # tempWeight = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2]
+    # tempNum = ['0', '6', '8', '9']
+    # tempWeight = [0.25, 0.26, 0.28, 0.26]
     # tempNum = ['0','8']
     # tempNum = ['0', '1']
     line_number_f = []
@@ -1030,7 +1105,9 @@ for temp in template_list:
 '''
 
 
-
+# mean_size = np.mean(diff_queue)
+# mean_size = np.median(diff_queue)
+mean_size = (np.mean(mser_diff1) + np.mean(mser_diff2))/2+2
 
 num = 16
 # mean_size = round(gray.shape[1]/num)
@@ -1233,6 +1310,7 @@ print(diff_status2)
 
 # 从模板匹配的结果对 置信度进行最后的筛选
 def merge_mould_result(peaks_line, trust, line_number_f, line_number_p, mean_size):
+    bias = 3
     for singlef, singlep in zip(line_number_f, line_number_p):
         i = 0
         print(singlef)
@@ -1245,7 +1323,7 @@ def merge_mould_result(peaks_line, trust, line_number_f, line_number_p, mean_siz
             if abs(singlef[i] - line) < bias or abs(singlep[i] - line) < bias:
                 trust[j] += 18
             elif line - singlef[i] > bias and singlep[i] - line > bias:
-                trust[j] -= 19
+                trust[j] -= 32
             elif singlef[i] - line > bias+1 and singlef[i] - line < mean_size - 4:
                 trust[j] -= 8
             elif line - singlef[i] > bias+1 and line - singlep[i] < mean_size - 4:
@@ -1259,6 +1337,8 @@ print(line_number_sf1)
 trust1 = merge_mould_result(peaks_line1, trust1, line_number_sf1, line_number_sp1, mean_size)
 trust2 = merge_mould_result(peaks_line2, trust2, line_number_sf2, line_number_sp2, mean_size)
 print('融合模板匹配的结果后：')
+print(peaks_line1)
+print(peaks_line2)
 print(trust1)
 print(trust2)
 
@@ -1300,7 +1380,7 @@ def add_mould_result(peaks_line, trust, line_number_f, line_number_p, peaks_diff
         line_number_pa.append(line_number_p[index])
 
     for j, line in enumerate(peaks_diff):
-        if j < len(peaks_diff) and peaks_diff[j] > mean_size *1.5:
+        if j < len(peaks_diff) and peaks_diff[j] > mean_size *1.7:
             mefs = []
             meps = []
             for singlef, singlep in zip(line_number_fa, line_number_pa):
@@ -1363,48 +1443,70 @@ print(diff_status2)
 def add_new_peaks_line(peaks_line, trust, col_sum_line, peaks_diff, mean_size):
     count = 0
     for j, line in enumerate(peaks_diff):
-        if j < len(peaks_diff) and peaks_diff[j] > mean_size *1.5:
+        if j < len(peaks_diff) and peaks_diff[j] > mean_size *1.6 and peaks_diff[j] > 20:
             part_sum = col_sum_line[peaks_line[j]:peaks_line[j+1]]
-            part_line = detect_peaks.detect_peaks(part_sum, mph=200, mpd=3, threshold=0)
+            part_line = detect_peaks.detect_peaks(part_sum, mph=300, mpd=5, threshold=0)
+            print('找到超大块：')
+            print(peaks_line[j])
+            print(peaks_line[j+1])
+            print(peaks_diff[j])
+            print('局部峰值：')
+            print(part_line)
             if len(part_line) > 0:
+                for k in part_line:
+                    il = k + peaks_line[j]
+                    print(peaks_line)
+                    peaks_line = np.insert(peaks_line, j + 1 + count, il)
+                    trust = np.insert(trust, j + 1 + count, 5)
+                    peaks_diff = np.diff(peaks_line)
+                    count += 1
+                    print('极小值插入成功：')
+                    print(il)
+                    print(peaks_line)
+
+
+                '''
                 minl =  peaks_diff[j]
                 med = round((peaks_line[j] + peaks_line[j + 1])/2)
                 cc = med
                 for l in part_line:
+                    l += peaks_line[j]
                     if abs(l-med) < minl:
                         cc = l
-                        minl =  abs(l-med)
+                        minl = abs(l-med)
 
                 il = cc
                 print(peaks_line)
                 peaks_line = np.insert(peaks_line, j + 1 + count, il)
                 trust = np.insert(trust, j + 1 + count, 5)
+                peaks_diff = np.diff(peaks_line1)
                 count += 1
                 print('极小值插入成功：')
                 print(il)
                 print(peaks_line)
+                '''
 
     return trust, peaks_line
 
 
-trust1, peaks_line1 = add_new_peaks_line(peaks_line1, trust1, col_sum_line1d, peaks_diff1, mean_size)
-trust2, peaks_line2 = add_new_peaks_line(peaks_line2, trust2, col_sum_line2d, peaks_diff2, mean_size)
-
+# trust1, peaks_line1 = add_new_peaks_line(peaks_line1, trust1, col_sum_line1d, peaks_diff1, mean_size)
+# trust2, peaks_line2 = add_new_peaks_line(peaks_line2, trust2, col_sum_line2d, peaks_diff2, mean_size)
+#
 peaks_diff1 = np.diff(peaks_line1)
 peaks_diff2 = np.diff(peaks_line2)
 diff_status1 = get_diff_status(peaks_diff1, mean_size, bias)
 diff_status2 = get_diff_status(peaks_diff2, mean_size, bias)
 line1_result = peaks_diff1[np.where(peaks_diff1 > 0)]
 line2_result = peaks_diff2[np.where(peaks_diff2 > 0)]
-print('二次插入极小值结果之后:')
-print(peaks_line1)
-print(peaks_line2)
-print(trust1)
-print(trust2)
-print(peaks_diff1)
-print(peaks_diff2)
-print(diff_status1)
-print(diff_status2)
+# print('二次插入极小值结果之后:')
+# print(peaks_line1)
+# print(peaks_line2)
+# print(trust1)
+# print(trust2)
+# print(peaks_diff1)
+# print(peaks_diff2)
+# print(diff_status1)
+# print(diff_status2)
 
 '''
 def handle_small_diff(trust, peaks_diff, diff_status, mean_size, bias):
@@ -1733,7 +1835,7 @@ def show_result(first, line_result, resultRGB, line):
         name += 1
 
 
-
+# cv2.destroyAllWindows()
 show_result(peaks_line1[0], line1_result, resultRGB1, 1)
 show_result(peaks_line2[0], line2_result, resultRGB2, 2)
 
@@ -1744,9 +1846,9 @@ print(diff_status1)
 print(diff_status2)
 
 
-# plt.plot(col_sum_line1d, 'b')
+plt.plot(col_sum_line2d, 'b')
 # plt.plot(col_sum_line1,'r')
-# plt.show()
+plt.show()
 
 
 
