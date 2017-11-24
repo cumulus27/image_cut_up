@@ -70,7 +70,7 @@ import detect_peaks
 # bann = '000006'
 # bann = '000008'
 # bann = '000018'
-# bann = '000027'
+bann = '000027'
 # bann = '000032'
 # bann = '000048'
 # bann = '000120'
@@ -100,7 +100,7 @@ import detect_peaks
 # bann = '000828'
 # bann = '000845'
 # bann = '000877'
-bann = '000930'
+# bann = '000930'
 
 
 # bann = '000055'
@@ -879,6 +879,7 @@ def mould_detect(img2, template, methods, weight):
     loc_fc = []
     loc_f2 = []
     loc_p2 = []
+    res_re = []
 
     bias = 3
     for x,y in loc_choice:
@@ -897,6 +898,7 @@ def mould_detect(img2, template, methods, weight):
                 if v < v2:
                     # 留下新的
                     loc_fc.remove((i, j))
+                    res_re.remove(v2)
                     flag = 0
                     break
 
@@ -910,6 +912,7 @@ def mould_detect(img2, template, methods, weight):
                 if v < v2:
                     # 留下新的
                     loc_fc.remove((i,j))
+                    res_re.remove(v2)
                     flag = 0
                     break
 
@@ -924,6 +927,7 @@ def mould_detect(img2, template, methods, weight):
                 if v < v2:
                     # 留下新的
                     loc_fc.remove((i, j))
+                    res_re.remove(v2)
                     flag = 0
                     break
                 else:
@@ -937,6 +941,7 @@ def mould_detect(img2, template, methods, weight):
         if flag == 0:
             # print((x,y))
             loc_fc.append((x,y))
+            res_re.append(v)
 
 
     for x,y in loc_fc:
@@ -969,13 +974,13 @@ def mould_detect(img2, template, methods, weight):
 
 
 
-    return loc_f2, loc_p2
+    return loc_f2, loc_p2, res_re
 
 
 
 def detect_number(img2):
     tempNum = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-    tempWeight = [0.30, 0.18, 0.25, 0.25, 0.25, 0.25, 0.3, 0.2, 0.32, 0.3]
+    tempWeight = [0.30, 0.18, 0.25, 0.25, 0.25, 0.25, 0.3, 0.2, 0.35, 0.3]
     # tempWeight = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2]
     # tempNum = ['0', '6', '8', '9']
     # tempWeight = [0.25, 0.26, 0.28, 0.26]
@@ -983,9 +988,11 @@ def detect_number(img2):
     # tempNum = ['0', '1']
     line_number_f = []
     line_number_p = []
+    line_number_res = []
     for num, weight in zip(tempNum, tempWeight):
         line_number_f0 = []
         line_number_p0 = []
+        line_number_res0 = []
         template1 = cv2.imread("/home/py/PycharmProjects/image_cut_up/mould/{}/001.jpg".format(num), 0)
         template2 = cv2.imread("/home/py/PycharmProjects/image_cut_up/mould/{}/002.jpg".format(num), 0)
         template3 = cv2.imread("/home/py/PycharmProjects/image_cut_up/mould/{}/003.jpg".format(num), 0)
@@ -996,53 +1003,267 @@ def detect_number(img2):
             template = cv2.equalizeHist(template)  # 模板直方图均衡
             print('当前数字：')
             print(num)
-            lf, lp = mould_detect(img2, template, methods, weight)
+            lf, lp, res = mould_detect(img2, template, methods, weight)
             line_number_f0.append(lf)
             line_number_p0.append(lp)
+            line_number_res0.append(res)
 
         line_number_f.append(line_number_f0)
         line_number_p.append(line_number_p0)
+        line_number_res.append(line_number_res0)
 
-    return line_number_f, line_number_p
+
+    return line_number_f, line_number_p, line_number_res
 
 
 # line_number_f1, line_number_p1 =  detect_number(grayline1od)
 # line_number_f2, line_number_p2 =  detect_number(grayline2od)
 
-line_number_f1, line_number_p1 =  detect_number(grayline1)
-line_number_f2, line_number_p2 =  detect_number(grayline2)
+line_number_f1, line_number_p1, res1 =  detect_number(grayline1)
+line_number_f2, line_number_p2, res2 =  detect_number(grayline2)
 
 
-def mould_result_filter(line_number_f, line_number_p):
+def mould_result_filter(line_number_f, line_number_p, res):
     line_number_sf = []
     line_number_sp = []
-    maxnum = 16
+    line_number_sfns = []
+    line_number_spns = []
+    line_number_res = []
+    # dead_range = []
+    # maxnum = 16
 
-    for singlef, singlep in zip(line_number_f, line_number_p):
-        choice = 0
-        current = 0
-        print(singlef)
-        for i,point in enumerate(singlef):
-            if len(point) > current and len(point) <= maxnum:
-                choice = i
+    for i, singlef in enumerate(line_number_f):
+        singlep = line_number_p[i]
+        res0 = res[i]
+        singlefs = []
+        singleps = []
+        res0s = []
+        for j, pointf in enumerate(singlef):
+            singlefs += pointf
+            singleps += singlep[j]
+            res0s += res0[j]
 
-        print('choice:')
-        print(choice)
+        # 重复过滤
+        loc_f2 = []
+        loc_p2 = []
+        loc_res = []
 
-        line_number_sf.append(sort(singlef[choice]))
-        line_number_sp.append(sort(singlep[choice]))
+        bias = 3
+        for k, f in enumerate(singlefs):
+            p = singleps[k]
+            v = res0s[k]
+            flag = 0
+            for o, f2 in enumerate(loc_f2):
+                p2 = loc_p2[o]
+                v2 = loc_res[o]
+                if abs(f - f2) < bias and abs(p - p2) < bias:
+                    # flag = 1
+                    # break
+                    # 交叉
+                    if v < v2:
+                        # 留下新的
+                        loc_f2.remove(f2)
+                        loc_p2.remove(p2)
+                        loc_res.remove(v2)
+                        flag = 0
+                        break
 
-    return line_number_sf, line_number_sp
+                    else:
+                        # 留下旧的
+                        flag = 1
+                        break
+
+                elif f > f2 and p > p2 and p2 - f > 1:
+                    # 交叉
+                    if v < v2:
+                        # 留下新的
+                        loc_f2.remove(f2)
+                        loc_p2.remove(p2)
+                        loc_res.remove(v2)
+                        flag = 0
+                        break
+
+                    else:
+                        # 留下旧的
+                        flag = 1
+                        break
 
 
-line_number_sf1, line_number_sp1 = mould_result_filter(line_number_f1, line_number_p1)
-line_number_sf2, line_number_sp2 = mould_result_filter(line_number_f2, line_number_p2)
+                elif f < f2 and p < p2 and p - f2 > 1:
+                    # 交叉
+                    if v < v2:
+                        # 留下新的
+                        loc_f2.remove(f2)
+                        loc_p2.remove(p2)
+                        loc_res.remove(v2)
+                        flag = 0
+                        break
+                    else:
+                        # 留下旧的
+                        flag = 1
+                        break
+
+                        # elif abs(f-i) < bias or abs(p-j) < bias:
+                        #     print('err!!! 模板匹配结果存在错误！ ')
+
+            if flag == 0:
+                # print((x,y))
+                loc_f2.append(f)
+                loc_p2.append(p)
+                loc_res.append(v)
+
+
+        line_number_sf.append(sort(loc_f2))
+        line_number_sp.append(sort(loc_p2))
+        line_number_sfns.append(loc_f2)
+        line_number_spns.append(loc_p2)
+        line_number_res.append(loc_res)
+
+
+        # dead_num = [0]
+        # if i in dead_num:
+        #     for fd,pd in zip(loc_f2, loc_p2):
+        #         dead_range.append((fd,pd))
+
+        '''
+        for x, y in zip(loc_f2, loc_p2):
+            loc_f2.append(x)
+            loc_p2.append(y)
+            cv2.rectangle(imgf, (x, 1), (x + ww, 1 + imgf.shape[0] - 2), 255, 2)
+        
+        plt.subplot(221), plt.imshow(img2, cmap="gray")
+        plt.title('Original Image'), plt.xticks([]), plt.yticks([])
+        plt.subplot(222), plt.imshow(template, cmap="gray")
+        plt.title('template Image'), plt.xticks([]), plt.yticks([])
+        # plt.subplot(223), plt.imshow(res, cmap="gray")
+        # plt.title('Matching Result'), plt.xticks([]), plt.yticks([])
+        # plt.subplot(224), plt.imshow(img, cmap="gray")
+        # plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
+        plt.subplot(224), plt.imshow(imgf, cmap="gray")
+        plt.title('Filter Result'), plt.xticks([]), plt.yticks([])
+        plt.subplot(223), plt.imshow(img, cmap="gray")
+        plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
+
+        plt.show()
+        '''
+        # choice = 0
+        # current = 0
+        # print(singlef)
+        # for i,point in enumerate(singlef):
+        #     if len(point) > current and len(point) <= maxnum:
+        #         choice = i
+        #
+        # print('choice:')
+        # print(choice)
+        #
+        # line_number_sf.append(sort(singlef[choice]))
+        # line_number_sp.append(sort(singlep[choice]))
+
+    return line_number_sf, line_number_sp , line_number_sfns, line_number_spns, line_number_res
+
+
+line_number_sf1, line_number_sp1, line_number_sfns1, line_number_spns1, line_number_res1 = mould_result_filter(line_number_f1, line_number_p1, res1)
+line_number_sf2, line_number_sp2, line_number_sfns2, line_number_spns2, line_number_res2 = mould_result_filter(line_number_f2, line_number_p2, res2)
 
 print('数字模板匹配结果：')
 print(line_number_f1)
 print(line_number_p1)
 print(line_number_f2)
 print(line_number_p2)
+
+
+def get_dead_range(line_number_sf, line_number_sp, res):
+    line_number_sfs = []
+    line_number_sps = []
+    ress = []
+    dead_range = []
+    for i, f in enumerate(line_number_sf):
+        line_number_sfs += f
+        line_number_sps += line_number_sp[i]
+        ress += res[i]
+
+    # 重复过滤
+    loc_f2 = []
+    loc_p2 = []
+    loc_res = []
+
+    bias = 3
+    for k, f in enumerate(line_number_sfs):
+        p = line_number_sps[k]
+        v = ress[k]
+        flag = 0
+        for o, f2 in enumerate(loc_f2):
+            p2 = loc_p2[o]
+            v2 = loc_res[o]
+            if abs(f - f2) < bias and abs(p - p2) < bias:
+                # flag = 1
+                # break
+                # 交叉
+                if v < v2:
+                    # 留下新的
+                    loc_f2.remove(f2)
+                    loc_p2.remove(p2)
+                    loc_res.remove(v2)
+                    flag = 0
+                    break
+
+                else:
+                    # 留下旧的
+                    flag = 1
+                    break
+
+            elif f > f2 and p > p2 and p2 - f > 1:
+                # 交叉
+                if v < v2:
+                    # 留下新的
+                    loc_f2.remove(f2)
+                    loc_p2.remove(p2)
+                    loc_res.remove(v2)
+                    flag = 0
+                    break
+
+                else:
+                    # 留下旧的
+                    flag = 1
+                    break
+
+
+            elif f < f2 and p < p2 and p - f2 > 1:
+                # 交叉
+                if v < v2:
+                    # 留下新的
+                    loc_f2.remove(f2)
+                    loc_p2.remove(p2)
+                    loc_res.remove(v2)
+                    flag = 0
+                    break
+                else:
+                    # 留下旧的
+                    flag = 1
+                    break
+
+                    # elif abs(f-i) < bias or abs(p-j) < bias:
+                    #     print('err!!! 模板匹配结果存在错误！ ')
+
+        if flag == 0:
+            # print((x,y))
+            loc_f2.append(f)
+            loc_p2.append(p)
+            loc_res.append(v)
+
+    for fd, pd in zip(loc_f2, loc_p2):
+        dead_range.append((fd, pd))
+
+    return dead_range
+
+
+dead_range1 = get_dead_range(line_number_sfns1, line_number_spns1, line_number_res1)
+dead_range2 = get_dead_range(line_number_sfns2, line_number_spns2, line_number_res2)
+
+print('得到排除点:')
+print(dead_range1)
+print(dead_range2)
+
 
 
 '''
@@ -1108,6 +1329,11 @@ for temp in template_list:
 # mean_size = np.mean(diff_queue)
 # mean_size = np.median(diff_queue)
 mean_size = (np.mean(mser_diff1) + np.mean(mser_diff2))/2+2
+
+if mean_size < 11:
+    mean_size = 11
+elif mean_size > 13:
+    mean_size = 13
 
 num = 16
 # mean_size = round(gray.shape[1]/num)
@@ -1363,11 +1589,23 @@ print(peaks_diff2)
 print(diff_status1)
 print(diff_status2)
 
+# dead_range1 = []
+# dead_range2 = []
 
+
+def is_line_in_deadrange(line, dead_range):
+    result = False
+    bias = 3
+    for f, p in dead_range:
+        if line > f + bias and line < p - bias:
+            result = True
+            break
+
+    return result
 
 
 # 将模板匹配的结果，加入最终结果中
-def add_mould_result(peaks_line, trust, line_number_f, line_number_p, peaks_diff, mean_size):
+def add_mould_result(peaks_line, trust, line_number_f, line_number_p, peaks_diff, dead_range, mean_size):
     # choice = [6, 8, 9]
     # choice = [8]
     choice = [2]
@@ -1395,33 +1633,41 @@ def add_mould_result(peaks_line, trust, line_number_f, line_number_p, peaks_diff
             xbfp = mefs + meps
             if len(xbfp) == 1:
                 il = xbfp[0]
-                # if len(mefs) == 0:
-                #     il += 2
-                # else:
-                #     il -= 2
-                print(peaks_line)
-                peaks_line = np.insert(peaks_line, j+1+count, il)
-                trust = np.insert(trust, j+1+count, 5)
-                count += 1
-                print('插入成功：')
-                print(il)
-                print(peaks_line)
+                if is_line_in_deadrange(il, dead_range):
+                    print('本该插入的点被判断为错误：')
+                    print(il)
+                else:
+                    # if len(mefs) == 0:
+                    #     il += 2
+                    # else:
+                    #     il -= 2
+                    print(peaks_line)
+                    peaks_line = np.insert(peaks_line, j + 1 + count, il)
+                    trust = np.insert(trust, j + 1 + count, 5)
+                    count += 1
+                    print('插入成功：')
+                    print(il)
+                    print(peaks_line)
 
             elif len(xbfp) == 2:
                 il = np.mean(xbfp)
-                peaks_line = np.insert(peaks_line, j + 1 + count, il)
-                trust = np.insert(trust, j + 1 + count, 5)
-                count += 1
-                print('插入成功：')
-                print(il)
+                if is_line_in_deadrange(il, dead_range):
+                    print('本该插入的点被判断为错误：')
+                    print(il)
+                else:
+                    peaks_line = np.insert(peaks_line, j + 1 + count, il)
+                    trust = np.insert(trust, j + 1 + count, 5)
+                    count += 1
+                    print('插入成功：')
+                    print(il)
 
     return trust, peaks_line
 
 
 
 
-trust1, peaks_line1 = add_mould_result(peaks_line1, trust1, line_number_sf1, line_number_sp1, peaks_diff1, mean_size)
-trust2, peaks_line2 = add_mould_result(peaks_line2, trust2, line_number_sf2, line_number_sp2, peaks_diff2, mean_size)
+trust1, peaks_line1 = add_mould_result(peaks_line1, trust1, line_number_sf1, line_number_sp1, peaks_diff1, dead_range1, mean_size)
+trust2, peaks_line2 = add_mould_result(peaks_line2, trust2, line_number_sf2, line_number_sp2, peaks_diff2, dead_range2, mean_size)
 
 peaks_diff1 = np.diff(peaks_line1)
 peaks_diff2 = np.diff(peaks_line2)
@@ -1440,7 +1686,7 @@ print(diff_status2)
 
 
 # 若大块分块的中心附近有极小值则添加分界线
-def add_new_peaks_line(peaks_line, trust, col_sum_line, peaks_diff, mean_size):
+def add_new_peaks_line(peaks_line, trust, col_sum_line, peaks_diff, dead_range, mean_size):
     count = 0
     for j, line in enumerate(peaks_diff):
         if j < len(peaks_diff) and peaks_diff[j] > mean_size *1.6 and peaks_diff[j] > 20:
@@ -1455,14 +1701,18 @@ def add_new_peaks_line(peaks_line, trust, col_sum_line, peaks_diff, mean_size):
             if len(part_line) > 0:
                 for k in part_line:
                     il = k + peaks_line[j]
-                    print(peaks_line)
-                    peaks_line = np.insert(peaks_line, j + 1 + count, il)
-                    trust = np.insert(trust, j + 1 + count, 5)
-                    peaks_diff = np.diff(peaks_line)
-                    count += 1
-                    print('极小值插入成功：')
-                    print(il)
-                    print(peaks_line)
+                    if is_line_in_deadrange(il, dead_range):
+                        print('本该插入的点被判断为错误：')
+                        print(il)
+                    else:
+                        print(peaks_line)
+                        peaks_line = np.insert(peaks_line, j + 1 + count, il)
+                        trust = np.insert(trust, j + 1 + count, 5)
+                        peaks_diff = np.diff(peaks_line)
+                        count += 1
+                        print('极小值插入成功：')
+                        print(il)
+                        print(peaks_line)
 
 
                 '''
@@ -1489,9 +1739,9 @@ def add_new_peaks_line(peaks_line, trust, col_sum_line, peaks_diff, mean_size):
     return trust, peaks_line
 
 
-# trust1, peaks_line1 = add_new_peaks_line(peaks_line1, trust1, col_sum_line1d, peaks_diff1, mean_size)
-# trust2, peaks_line2 = add_new_peaks_line(peaks_line2, trust2, col_sum_line2d, peaks_diff2, mean_size)
-#
+trust1, peaks_line1 = add_new_peaks_line(peaks_line1, trust1, col_sum_line1d, peaks_diff1, dead_range1, mean_size)
+trust2, peaks_line2 = add_new_peaks_line(peaks_line2, trust2, col_sum_line2d, peaks_diff2, dead_range2, mean_size)
+
 peaks_diff1 = np.diff(peaks_line1)
 peaks_diff2 = np.diff(peaks_line2)
 diff_status1 = get_diff_status(peaks_diff1, mean_size, bias)
@@ -1508,7 +1758,20 @@ line2_result = peaks_diff2[np.where(peaks_diff2 > 0)]
 # print(diff_status1)
 # print(diff_status2)
 
-'''
+
+# 更新预估平均尺寸
+diff_queue = np.append(peaks_diff1, peaks_diff2)
+diff_queue = diff_queue[np.where(diff_queue > 8)]
+diff_queue = diff_queue[np.where(diff_queue < 16)]
+mean_size = np.median(diff_queue)
+bias = mean_size * 0.2
+print('最新的平均宽度:')
+print(mean_size)
+diff_status1 = get_diff_status(peaks_diff1, mean_size, bias)
+diff_status2 = get_diff_status(peaks_diff2, mean_size, bias)
+
+
+
 def handle_small_diff(trust, peaks_diff, diff_status, mean_size, bias):
     n = len(peaks_diff)
     for i in range(n):
@@ -1624,7 +1887,8 @@ def handle_big_diff(trust, peaks_diff, diff_status, mean_size, bias):
                 j += 1
                 fenjie = round(diff / j)
                 # print(fenjie)
-                if fenjie < ll + bias * 2 and fenjie > sl + 1:
+                if fenjie < ll + bias * 2 and fenjie > sl:
+
                     # print(peaks_diff)
                     peaks_diff[i] = fenjie
                     for n in range(j - 2):
@@ -1649,11 +1913,11 @@ peaks_diff2 = handle_big_diff(trust2, peaks_diff2, diff_status2, mean_size, bias
 line1_result = peaks_diff1[np.where(peaks_diff1 > 0)]
 line2_result = peaks_diff2[np.where(peaks_diff2 > 0)]
 
-# print('result:')
-# print(line1_result)
-# print(line2_result)
+print('big块拆分之后result:')
+print(line1_result)
+print(line2_result)
 
-
+'''
 # 两个连续偏大情况纠错
 def three2two_err_fix(line_result, num, mean_size, bias):
     length = len(line_result)
