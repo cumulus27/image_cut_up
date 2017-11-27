@@ -8,7 +8,7 @@ from skimage import data, draw, color, transform, feature
 import detect_peaks
 
 
-for i in range(10):
+for i in range(932):
     nummmm = str(i+1)
     while len(nummmm) < 6:
         nummmm = '0'+nummmm

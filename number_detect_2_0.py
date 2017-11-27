@@ -1126,27 +1126,15 @@ def mould_result_filter(grayline, line_number_f, line_number_p, res):
         #     for fd,pd in zip(loc_f2, loc_p2):
         #         dead_range.append((fd,pd))
 
-        '''
-        for x, y in zip(loc_f2, loc_p2):
-            loc_f2.append(x)
-            loc_p2.append(y)
-            cv2.rectangle(gray, (x, 1), (y, 1 + gray.shape[0] - 2), 255, 2)
 
-        plt.subplot(221), plt.imshow(gray, cmap="gray")
-        plt.title('Original Image'), plt.xticks([]), plt.yticks([])
-        plt.subplot(222), plt.imshow(gray, cmap="gray")
-        plt.title('template Image'), plt.xticks([]), plt.yticks([])
-        # plt.subplot(223), plt.imshow(res, cmap="gray")
-        # plt.title('Matching Result'), plt.xticks([]), plt.yticks([])
-        # plt.subplot(224), plt.imshow(img, cmap="gray")
-        # plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
-        plt.subplot(224), plt.imshow(gray, cmap="gray")
-        plt.title('Filter Result'), plt.xticks([]), plt.yticks([])
-        plt.subplot(223), plt.imshow(gray, cmap="gray")
-        plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
+        # for x, y in zip(loc_f2, loc_p2):
+        #     cv2.rectangle(gray, (x, 1), (y, 1 + gray.shape[0] - 2), 255, 2)
+        #
+        # plt.imshow(gray, cmap="gray")
+        # plt.title('Detected Point {}'.format(i)), plt.xticks([]), plt.yticks([])
+        #
+        # plt.show()
 
-        plt.show()
-        '''
 
         # choice = 0
         # current = 0
@@ -1174,7 +1162,7 @@ print(line_number_f2)
 print(line_number_p2)
 
 
-def get_dead_range(line_number_sf, line_number_sp, res):
+def get_dead_range(line_number_sf, line_number_sp, res, gray):
     line_number_sfs = []
     line_number_sps = []
     ress = []
@@ -1256,11 +1244,19 @@ def get_dead_range(line_number_sf, line_number_sp, res):
     for fd, pd in zip(loc_f2, loc_p2):
         dead_range.append((fd, pd))
 
+    for x, y in zip(loc_f2, loc_p2):
+        cv2.rectangle(gray, (x, 1), (y, 1 + gray.shape[0] - 2), 255, 2)
+
+    plt.imshow(gray, cmap="gray")
+    plt.title('Combine Result'), plt.xticks([]), plt.yticks([])
+
+    plt.show()
+
     return dead_range
 
 
-dead_range1 = get_dead_range(line_number_sfns1, line_number_spns1, line_number_res1)
-dead_range2 = get_dead_range(line_number_sfns2, line_number_spns2, line_number_res2)
+dead_range1 = get_dead_range(line_number_sfns1, line_number_spns1, line_number_res1, grayline1)
+dead_range2 = get_dead_range(line_number_sfns2, line_number_spns2, line_number_res2, grayline2)
 
 print('得到排除点:')
 print(dead_range1)
