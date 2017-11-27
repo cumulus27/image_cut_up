@@ -70,7 +70,7 @@ import detect_peaks
 # bann = '000006'
 # bann = '000008'
 # bann = '000018'
-bann = '000027'
+# bann = '000027'
 # bann = '000032'
 # bann = '000048'
 # bann = '000120'
@@ -92,7 +92,7 @@ bann = '000027'
 # bann = '000719'
 # bann = '000730'
 # bann = '000764'   #!
-# bann = '000765'   #!
+bann = '000765'   #!
 # bann = '000766'   #!
 # bann = '000778'
 # bann = '000800'
@@ -1023,7 +1023,7 @@ line_number_f1, line_number_p1, res1 =  detect_number(grayline1)
 line_number_f2, line_number_p2, res2 =  detect_number(grayline2)
 
 
-def mould_result_filter(line_number_f, line_number_p, res):
+def mould_result_filter(grayline, line_number_f, line_number_p, res):
     line_number_sf = []
     line_number_sp = []
     line_number_sfns = []
@@ -1033,6 +1033,7 @@ def mould_result_filter(line_number_f, line_number_p, res):
     # maxnum = 16
 
     for i, singlef in enumerate(line_number_f):
+        gray = grayline.copy()
         singlep = line_number_p[i]
         res0 = res[i]
         singlefs = []
@@ -1129,23 +1130,24 @@ def mould_result_filter(line_number_f, line_number_p, res):
         for x, y in zip(loc_f2, loc_p2):
             loc_f2.append(x)
             loc_p2.append(y)
-            cv2.rectangle(imgf, (x, 1), (x + ww, 1 + imgf.shape[0] - 2), 255, 2)
-        
-        plt.subplot(221), plt.imshow(img2, cmap="gray")
+            cv2.rectangle(gray, (x, 1), (y, 1 + gray.shape[0] - 2), 255, 2)
+
+        plt.subplot(221), plt.imshow(gray, cmap="gray")
         plt.title('Original Image'), plt.xticks([]), plt.yticks([])
-        plt.subplot(222), plt.imshow(template, cmap="gray")
+        plt.subplot(222), plt.imshow(gray, cmap="gray")
         plt.title('template Image'), plt.xticks([]), plt.yticks([])
         # plt.subplot(223), plt.imshow(res, cmap="gray")
         # plt.title('Matching Result'), plt.xticks([]), plt.yticks([])
         # plt.subplot(224), plt.imshow(img, cmap="gray")
         # plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
-        plt.subplot(224), plt.imshow(imgf, cmap="gray")
+        plt.subplot(224), plt.imshow(gray, cmap="gray")
         plt.title('Filter Result'), plt.xticks([]), plt.yticks([])
-        plt.subplot(223), plt.imshow(img, cmap="gray")
+        plt.subplot(223), plt.imshow(gray, cmap="gray")
         plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
 
         plt.show()
         '''
+
         # choice = 0
         # current = 0
         # print(singlef)
@@ -1162,8 +1164,8 @@ def mould_result_filter(line_number_f, line_number_p, res):
     return line_number_sf, line_number_sp , line_number_sfns, line_number_spns, line_number_res
 
 
-line_number_sf1, line_number_sp1, line_number_sfns1, line_number_spns1, line_number_res1 = mould_result_filter(line_number_f1, line_number_p1, res1)
-line_number_sf2, line_number_sp2, line_number_sfns2, line_number_spns2, line_number_res2 = mould_result_filter(line_number_f2, line_number_p2, res2)
+line_number_sf1, line_number_sp1, line_number_sfns1, line_number_spns1, line_number_res1 = mould_result_filter(grayline1, line_number_f1, line_number_p1, res1)
+line_number_sf2, line_number_sp2, line_number_sfns2, line_number_spns2, line_number_res2 = mould_result_filter(grayline2, line_number_f2, line_number_p2, res2)
 
 print('数字模板匹配结果：')
 print(line_number_f1)
@@ -1687,8 +1689,9 @@ print(diff_status2)
 
 # 若大块分块的中心附近有极小值则添加分界线
 def add_new_peaks_line(peaks_line, trust, col_sum_line, peaks_diff, dead_range, mean_size):
-    count = 0
+
     for j, line in enumerate(peaks_diff):
+        count = 0
         if j < len(peaks_diff) and peaks_diff[j] > mean_size *1.6 and peaks_diff[j] > 20:
             part_sum = col_sum_line[peaks_line[j]:peaks_line[j+1]]
             part_line = detect_peaks.detect_peaks(part_sum, mph=300, mpd=5, threshold=0)
