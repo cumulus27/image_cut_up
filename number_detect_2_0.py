@@ -4,7 +4,7 @@ import os
 from pylab import *
 from matplotlib import pyplot as plt
 import scipy.signal as signal
-from skimage import data, draw, color, transform, feature
+# from skimage import data, draw, color, transform, feature
 import detect_peaks
 #
 # src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
@@ -66,7 +66,7 @@ import detect_peaks
 # src="/home/py/PycharmProjects/image_process/extract/000447.jpg"
 
 # bann = '000792'
-# bann = '000003'
+bann = '000003'
 # bann = '000006'
 # bann = '000008'
 # bann = '000018'
@@ -92,7 +92,7 @@ import detect_peaks
 # bann = '000719'
 # bann = '000730'
 # bann = '000764'   #!
-bann = '000765'   #!
+# bann = '000765'   #!
 # bann = '000766'   #!
 # bann = '000778'
 # bann = '000800'
@@ -106,7 +106,8 @@ bann = '000765'   #!
 # bann = '000055'
 # bann = '000200'
 
-src="/home/py/PycharmProjects/image_process/extract/{}.jpg".format(bann)
+# src="/home/py/PycharmProjects/image_process/extract/{}.jpg".format(bann)
+src="/home/ad/code/extract/{}.jpg".format(bann)
 RGB = cv2.imread(src)
 cv2.imshow('RGB', RGB)
 (h, w) = RGB.shape[:2]
@@ -2083,8 +2084,11 @@ def show_result(first, line_result, resultRGB, line):
     point = first
     name = 1
     fat = 2
-    if not os.path.exists("/home/py/PycharmProjects/image_cut_up/result/{}".format(bann)):
-        os.makedirs("/home/py/PycharmProjects/image_cut_up/result/{}".format(bann))
+    # if not os.path.exists("/home/py/PycharmProjects/image_cut_up/result/{}".format(bann)):
+    #     os.makedirs("/home/py/PycharmProjects/image_cut_up/result/{}".format(bann))
+
+    if not os.path.exists("./result/{}".format(bann)):
+        os.makedirs("./result/{}".format(bann))
     for i in line_result:
         sigleim = resultRGB[:, max(point - fat, 0):min(point + i + fat, resultRGB.shape[1] - 1)]
         # print(point-fat)
@@ -2093,7 +2097,9 @@ def show_result(first, line_result, resultRGB, line):
         # print(sigleim.shape)
         cv2.imshow(str(line) + 'sigle' + str(name), sigleim)
 
-        cv2.imwrite("/home/py/PycharmProjects/image_cut_up/result/{}/{}sigle{}.jpg".format(bann, line, name), sigleim, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+        cv2.imwrite("./result/{}/{}sigle{}.jpg".format(bann, line, name), sigleim,
+                    [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+        # cv2.imwrite("/home/py/PycharmProjects/image_cut_up/result/{}/{}sigle{}.jpg".format(bann, line, name), sigleim, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
         point += i
         name += 1
 
