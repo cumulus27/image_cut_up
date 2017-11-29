@@ -8,13 +8,13 @@ from skimage import data, draw, color, transform, feature
 import detect_peaks
 
 
-for i in range(100):
-    nummmm = str(i+1)
-    while len(nummmm) < 6:
-        nummmm = '0'+nummmm
+for i in range(200):
+    bann = str(i+1)
+    while len(bann) < 6:
+        bann = '0'+bann
 
-    print(nummmm)
-    src = "/home/py/PycharmProjects/image_process/extract/{}.jpg".format(nummmm)
+    print(bann)
+    src = "./extract/{}.jpg".format(bann)
     RGB = cv2.imread(src)
     # cv2.imshow('RGB', RGB)
     (h, w) = RGB.shape[:2]
@@ -271,9 +271,9 @@ for i in range(100):
 
     peaks_line1 = np.concatenate((np.array([0]), peaks_line1, np.array([len(col_sum_line1d)])), axis=0)
     peaks_line2 = np.concatenate((np.array([0]), peaks_line2, np.array([len(col_sum_line2d)])), axis=0)
-    print('第二次局部均衡分界点：')
-    print(peaks_line1)
-    print(peaks_line2)
+    # print('第二次局部均衡分界点：')
+    # print(peaks_line1)
+    # print(peaks_line2)
 
 
     def part_hist(grayline, peaks_line):
@@ -666,13 +666,13 @@ for i in range(100):
                     else:
                         print('warning!!!未知情景，请检查！')
 
-        # print(mser_line1)
-        # print(mser_line2)
-        # print(delete)
+        print(mser_line1)
+        print(mser_line2)
+        print(delete)
         mser_line1 = [i for i, j in zip(mser_line1, delete) if i != -1 and j != 1]
         mser_line2 = [i for i, j in zip(mser_line2, delete) if i != -1 and j != 1]
-        # print(mser_line1)
-        # print(mser_line2)
+        print(mser_line1)
+        print(mser_line2)
         return mser_line1, mser_line2
 
 
@@ -905,8 +905,8 @@ for i in range(100):
             for temp in template_list:
                 template = eval(temp)
                 template = cv2.equalizeHist(template)  # 模板直方图均衡
-                # print('当前数字：')
-                # print(num)
+                print('当前数字：')
+                print(num)
                 lf, lp, res = mould_detect(img2, template, methods, weight)
                 line_number_f0.append(lf)
                 line_number_p0.append(lp)
@@ -1022,6 +1022,7 @@ for i in range(100):
             line_number_spns.append(loc_p2)
             line_number_res.append(loc_res)
 
+
             # dead_num = [0]
             # if i in dead_num:
             #     for fd,pd in zip(loc_f2, loc_p2):
@@ -1029,25 +1030,13 @@ for i in range(100):
 
 
             # for x, y in zip(loc_f2, loc_p2):
-            #     loc_f2.append(x)
-            #     loc_p2.append(y)
             #     cv2.rectangle(gray, (x, 1), (y, 1 + gray.shape[0] - 2), 255, 2)
-            '''
-            plt.subplot(221), plt.imshow(gray, cmap="gray")
-            plt.title('Original Image'), plt.xticks([]), plt.yticks([])
-            plt.subplot(222), plt.imshow(gray, cmap="gray")
-            plt.title('template Image'), plt.xticks([]), plt.yticks([])
-            # plt.subplot(223), plt.imshow(res, cmap="gray")
-            # plt.title('Matching Result'), plt.xticks([]), plt.yticks([])
-            # plt.subplot(224), plt.imshow(img, cmap="gray")
-            # plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
-            plt.subplot(224), plt.imshow(gray, cmap="gray")
-            plt.title('Filter Result'), plt.xticks([]), plt.yticks([])
-            plt.subplot(223), plt.imshow(gray, cmap="gray")
-            plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
+            #
+            # plt.imshow(gray, cmap="gray")
+            # plt.title('Detected Point {}'.format(i)), plt.xticks([]), plt.yticks([])
+            #
+            # plt.show()
 
-            plt.show()
-            '''
 
             # choice = 0
             # current = 0
@@ -1077,7 +1066,7 @@ for i in range(100):
     # print(line_number_p2)
 
 
-    def get_dead_range(line_number_sf, line_number_sp, res):
+    def get_dead_range(line_number_sf, line_number_sp, res, gray):
         line_number_sfs = []
         line_number_sps = []
         ress = []
@@ -1159,11 +1148,19 @@ for i in range(100):
         for fd, pd in zip(loc_f2, loc_p2):
             dead_range.append((fd, pd))
 
+        for x, y in zip(loc_f2, loc_p2):
+            cv2.rectangle(gray, (x, 1), (y, 1 + gray.shape[0] - 2), 255, 2)
+
+        # plt.imshow(gray, cmap="gray")
+        # plt.title('Combine Result'), plt.xticks([]), plt.yticks([])
+        #
+        # plt.show()
+
         return dead_range
 
 
-    dead_range1 = get_dead_range(line_number_sfns1, line_number_spns1, line_number_res1)
-    dead_range2 = get_dead_range(line_number_sfns2, line_number_spns2, line_number_res2)
+    dead_range1 = get_dead_range(line_number_sfns1, line_number_spns1, line_number_res1, grayline1)
+    dead_range2 = get_dead_range(line_number_sfns2, line_number_spns2, line_number_res2, grayline2)
 
     # print('得到排除点:')
     # print(dead_range1)
@@ -1239,8 +1236,8 @@ for i in range(100):
 
     num = 16
     # mean_size = round(gray.shape[1]/num)
-    # print('参考宽度：')
-    # print(mean_size)
+    print('参考宽度：')
+    print(mean_size)
     bias = round(mean_size * 0.25)
 
 
@@ -1294,14 +1291,16 @@ for i in range(100):
     trust1 = get_neighber_trust(trust1, peaks_diff1, diff_status1)
     trust2 = get_neighber_trust(trust2, peaks_diff2, diff_status2)
 
-    # print('First Trust:')
-    # print(trust1)
-    # print(trust2)
+    print('First Trust:')
+    print(trust1)
+    print(trust2)
 
 
     # 将两种方案得到的分界线融合起来
     def combine_the_two_way(peaks_line, mser_line1, mser_line2, trust):
         i = 0
+        if len(mser_line1) < 1:
+            return trust
         mser_line1.append(1000)
         for j, line in enumerate(peaks_line):
             while i < len(mser_line1) - 1 and line > mser_line1[i + 1]:
@@ -1317,9 +1316,9 @@ for i in range(100):
 
     trust1 = combine_the_two_way(peaks_line1, mser_line11, mser_line12, trust1)
     trust2 = combine_the_two_way(peaks_line2, mser_line21, mser_line22, trust2)
-    # print('融合后的置信度：')
-    # print(trust1)
-    # print(trust2)
+    print('融合后的置信度：')
+    print(trust1)
+    print(trust2)
 
 
     # 从分界线本身像素分布确定第二次置信度
@@ -1359,9 +1358,9 @@ for i in range(100):
     thresholdl = 170
     trust1 = get_self_trust(trust1, grayline1, peaks_line1, thresholdh, thresholdl)
     trust2 = get_self_trust(trust2, grayline2, peaks_line2, thresholdh, thresholdl)
-    # print('Second Trust:')
-    # print(trust1)
-    # print(trust2)
+    print('Second Trust:')
+    print(trust1)
+    print(trust2)
 
     '''
     def delete_zeros(line_result, trust):
@@ -1431,13 +1430,13 @@ for i in range(100):
     trust1 = get_distrubute_trust(peaks_line1, trust1, peaks_diff1, bd_diff1, diff_status1, mean_size)
     trust2 = get_distrubute_trust(peaks_line2, trust2, peaks_diff2, bd_diff2, diff_status2, mean_size)
 
-    # print('get_distrubute_trust:')
-    # print(peaks_diff1)
-    # print(peaks_diff2)
-    # print(trust1)
-    # print(trust2)
-    # print(diff_status1)
-    # print(diff_status2)
+    print('get_distrubute_trust:')
+    print(peaks_diff1)
+    print(peaks_diff2)
+    print(trust1)
+    print(trust2)
+    print(diff_status1)
+    print(diff_status2)
 
 
     # 从模板匹配的结果对 置信度进行最后的筛选
@@ -1464,7 +1463,7 @@ for i in range(100):
         return trust
 
 
-    # print(line_number_sf1)
+    print(line_number_sf1)
     trust1 = merge_mould_result(peaks_line1, trust1, line_number_sf1, line_number_sp1, mean_size)
     trust2 = merge_mould_result(peaks_line2, trust2, line_number_sf2, line_number_sp2, mean_size)
     # print('融合模板匹配的结果后：')
@@ -1491,8 +1490,8 @@ for i in range(100):
     # print(peaks_diff2)
     # print(diff_status1)
     # print(diff_status2)
-
-
+    #
+    #
     # dead_range1 = []
     # dead_range2 = []
 
@@ -1577,15 +1576,15 @@ for i in range(100):
     peaks_diff2 = np.diff(peaks_line2)
     diff_status1 = get_diff_status(peaks_diff1, mean_size, bias)
     diff_status2 = get_diff_status(peaks_diff2, mean_size, bias)
-    # print('插入模板结果之后:')
-    # print(peaks_line1)
-    # print(peaks_line2)
-    # print(trust1)
-    # print(trust2)
-    # print(peaks_diff1)
-    # print(peaks_diff2)
-    # print(diff_status1)
-    # print(diff_status2)
+    print('插入模板结果之后:')
+    print(peaks_line1)
+    print(peaks_line2)
+    print(trust1)
+    print(trust2)
+    print(peaks_diff1)
+    print(peaks_diff2)
+    print(diff_status1)
+    print(diff_status2)
 
 
     # 若大块分块的中心附近有极小值则添加分界线
@@ -1766,9 +1765,9 @@ for i in range(100):
     trust2, peaks_diff2, diff_status2 = handle_small_diff(trust2, peaks_diff2, diff_status2, mean_size, bias)
 
     # 第一轮之后的trust
-    # print('第一轮之后的trust:')
-    # print(trust1)
-    # print(trust2)
+    print('第一轮之后的trust:')
+    print(trust1)
+    print(trust2)
     line1_result = peaks_diff1[np.where(peaks_diff1 > 0)]
     line2_result = peaks_diff2[np.where(peaks_diff2 > 0)]
 
@@ -1986,24 +1985,25 @@ for i in range(100):
         point = first
         name = 1
         fat = 2
-        if not os.path.exists("/home/py/PycharmProjects/image_cut_up/result/{}".format(nummmm)):
-            os.makedirs("/home/py/PycharmProjects/image_cut_up/result/{}".format(nummmm))
+
+        if not os.path.exists("./result/{}".format(bann)):
+            os.makedirs("./result/{}".format(bann))
         for i in line_result:
             sigleim = resultRGB[:, max(point - fat, 0):min(point + i + fat, resultRGB.shape[1] - 1)]
             # print(point-fat)
             # print(point+i+fat)
             # print(resultRGB.shape)
             # print(sigleim.shape)
-            cv2.imshow(str(line) + 'sigle' + str(name), sigleim)
+            # cv2.imshow(str(line) + 'sigle' + str(name), sigleim)
 
-            cv2.imwrite("/home/py/PycharmProjects/image_cut_up/result/{}/{}sigle{}.jpg".format(nummmm, line, name),
-                        sigleim, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+            cv2.imwrite("./result/{}/{}sigle{}.jpg".format(bann, line, name), sigleim,
+                        [int(cv2.IMWRITE_JPEG_QUALITY), 100])
             point += i
             name += 1
 
 
-    cv2.destroyAllWindows()
+    cv2.imwrite("./result/{}/yuantu{}.jpg".format(bann,bann), RGB,
+                [int(cv2.IMWRITE_JPEG_QUALITY), 100])
     show_result(peaks_line1[0], line1_result, resultRGB1, 1)
     show_result(peaks_line2[0], line2_result, resultRGB2, 2)
-    print('ok!')
-
+    cv2.destroyAllWindows()

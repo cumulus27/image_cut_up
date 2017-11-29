@@ -42,7 +42,8 @@ import detect_peaks
 # bann = '000828'
 # bann = '000845'
 # bann = '000877'
-bann = '000930'
+# bann = '000930'
+bann = '000054'
 # bann = '000055'
 # bann = '000200'
 
@@ -1336,10 +1337,15 @@ print(trust2)
 # 将两种方案得到的分界线融合起来
 def combine_the_two_way(peaks_line, mser_line1, mser_line2, trust):
     i = 0
+    if len(mser_line1) < 1:
+        return trust
     mser_line1.append(1000)
     for j,line in enumerate(peaks_line):
         while i < len(mser_line1)-1 and line > mser_line1[i+1]:
             i += 1
+
+        print(len(mser_line1))
+        print(i)
 
         if abs(mser_line1[i] - line) < bias or abs(mser_line2[i] - line) < bias:
             trust[j] += 8
