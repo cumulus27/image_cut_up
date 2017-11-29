@@ -7,66 +7,8 @@ import scipy.signal as signal
 # from skimage import data, draw, color, transform, feature
 import detect_peaks
 #
-# src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000048.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000006.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000012.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000824.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000027.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000019.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000118.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000055.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000075.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000158.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000177.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000200.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000205.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000212.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000216.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000229.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000246.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000259.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000724.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000063.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000877.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000067.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000150.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000003.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000018.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000041.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000097.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000918.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000792.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000930.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000926.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000907.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000898.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000887.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000859.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000851.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000872.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000845.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000843.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000834.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000830.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000825.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000821.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000655.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000611.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000585.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000569.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000548.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000513.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000509.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000501.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000488.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000483.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000463.jpg"
-# src="/home/py/PycharmProjects/image_process/extract/000447.jpg"
-
 # bann = '000792'
-bann = '000003'
+# bann = '000003'
 # bann = '000006'
 # bann = '000008'
 # bann = '000018'
@@ -100,14 +42,11 @@ bann = '000003'
 # bann = '000828'
 # bann = '000845'
 # bann = '000877'
-# bann = '000930'
-
-
+bann = '000930'
 # bann = '000055'
 # bann = '000200'
 
-# src="/home/py/PycharmProjects/image_process/extract/{}.jpg".format(bann)
-src="/home/ad/code/extract/{}.jpg".format(bann)
+src="./extract/{}.jpg".format(bann)
 RGB = cv2.imread(src)
 cv2.imshow('RGB', RGB)
 (h, w) = RGB.shape[:2]
@@ -2084,8 +2023,6 @@ def show_result(first, line_result, resultRGB, line):
     point = first
     name = 1
     fat = 2
-    # if not os.path.exists("/home/py/PycharmProjects/image_cut_up/result/{}".format(bann)):
-    #     os.makedirs("/home/py/PycharmProjects/image_cut_up/result/{}".format(bann))
 
     if not os.path.exists("./result/{}".format(bann)):
         os.makedirs("./result/{}".format(bann))
@@ -2099,7 +2036,6 @@ def show_result(first, line_result, resultRGB, line):
 
         cv2.imwrite("./result/{}/{}sigle{}.jpg".format(bann, line, name), sigleim,
                     [int(cv2.IMWRITE_JPEG_QUALITY), 100])
-        # cv2.imwrite("/home/py/PycharmProjects/image_cut_up/result/{}/{}sigle{}.jpg".format(bann, line, name), sigleim, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
         point += i
         name += 1
 
