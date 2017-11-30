@@ -1,14 +1,17 @@
+# -*- coding: utf-8 -*
+
+
 import numpy as np
 import cv2
 import os
 from pylab import *
 from matplotlib import pyplot as plt
 import scipy.signal as signal
-from skimage import data, draw, color, transform, feature
+# from skimage import data, draw, color, transform, feature
 import detect_peaks
 
 
-for i in range(200):
+for i in range(40):
     bann = str(i+1)
     while len(bann) < 6:
         bann = '0'+bann
@@ -897,9 +900,9 @@ for i in range(200):
             line_number_f0 = []
             line_number_p0 = []
             line_number_res0 = []
-            template1 = cv2.imread("/home/py/PycharmProjects/image_cut_up/mould/{}/001.jpg".format(num), 0)
-            template2 = cv2.imread("/home/py/PycharmProjects/image_cut_up/mould/{}/002.jpg".format(num), 0)
-            template3 = cv2.imread("/home/py/PycharmProjects/image_cut_up/mould/{}/003.jpg".format(num), 0)
+            template1 = cv2.imread("./mould/{}/001.jpg".format(num), 0)
+            template2 = cv2.imread("./mould/{}/002.jpg".format(num), 0)
+            template3 = cv2.imread("./mould/{}/003.jpg".format(num), 0)
             template_list = ['template1', 'template2', 'template3']
             methods = 'cv2.TM_SQDIFF_NORMED'
             for temp in template_list:
@@ -1996,14 +1999,16 @@ for i in range(200):
             # print(sigleim.shape)
             # cv2.imshow(str(line) + 'sigle' + str(name), sigleim)
 
-            cv2.imwrite("./result/{}/{}sigle{}.jpg".format(bann, line, name), sigleim,
+            # cv2.imwrite("./result/{}/{}sigle{}.jpg".format(bann, line, name), sigleim,
+            #             [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+            cv2.imwrite("./result/combine/{}sigle{}.jpg".format(bann, name), sigleim,
                         [int(cv2.IMWRITE_JPEG_QUALITY), 100])
             point += i
             name += 1
 
 
-    cv2.imwrite("./result/{}/yuantu{}.jpg".format(bann,bann), RGB,
-                [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+    # cv2.imwrite("./result/{}/yuantu{}.jpg".format(bann,bann), RGB,
+    #             [int(cv2.IMWRITE_JPEG_QUALITY), 100])
     show_result(peaks_line1[0], line1_result, resultRGB1, 1)
     show_result(peaks_line2[0], line2_result, resultRGB2, 2)
     cv2.destroyAllWindows()

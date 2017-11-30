@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*
+
+
 import numpy as np
 import cv2
 import os
@@ -9,6 +12,7 @@ import detect_peaks
 #
 # bann = '000792'
 # bann = '000003'
+bann = '000004'
 # bann = '000006'
 # bann = '000008'
 # bann = '000018'
@@ -43,7 +47,7 @@ import detect_peaks
 # bann = '000845'
 # bann = '000877'
 # bann = '000930'
-bann = '000054'
+# bann = '000054'
 # bann = '000055'
 # bann = '000200'
 
@@ -94,7 +98,7 @@ cv2.imshow('BalRGB ', balRGB)
 
 b, g, r = cv2.split(balRGB)
 
-# 直方图均衡化
+
 fRGB = balRGB
 LAB = cv2.cvtColor(fRGB, cv2.COLOR_BGR2LAB)
 cv2.imshow('LAB', LAB)
@@ -934,9 +938,9 @@ def detect_number(img2):
         line_number_f0 = []
         line_number_p0 = []
         line_number_res0 = []
-        template1 = cv2.imread("/home/py/PycharmProjects/image_cut_up/mould/{}/001.jpg".format(num), 0)
-        template2 = cv2.imread("/home/py/PycharmProjects/image_cut_up/mould/{}/002.jpg".format(num), 0)
-        template3 = cv2.imread("/home/py/PycharmProjects/image_cut_up/mould/{}/003.jpg".format(num), 0)
+        template1 = cv2.imread("./mould/{}/001.jpg".format(num), 0)
+        template2 = cv2.imread("./mould/{}/002.jpg".format(num), 0)
+        template3 = cv2.imread("./mould/{}/003.jpg".format(num), 0)
         template_list = ['template1', 'template2', 'template3']
         methods = 'cv2.TM_SQDIFF_NORMED'
         for temp in template_list:
