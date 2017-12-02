@@ -9,6 +9,7 @@ from matplotlib import pyplot as plt
 import scipy.signal as signal
 import detect_peaks
 
+
 class ImagePartition(object):
     """Partition the image to single number
 
@@ -29,13 +30,16 @@ class ImagePartition(object):
         self.resultRGB = image
         self.nbRGB = image
         self.b, self.g, self.r = cv2.split(self.RGB)
-        self.gray = []
-        self.grayline1 = []
-        self.grayline2 = []
+        # self.gray = []
+        # self.grayline1 = []
+        # self.grayline2 = []
+        # self.grayline1od = []
+        # self.grayline2od = []
 
-    def white_balance(self, per):
+    def white_balance(self, per=0.92):
         """Revise white balance of the image."""
 
+        # per = 0.92
         self.b, self.g, self.r = cv2.split(self.RGB)
         xs = self.r.shape[0]
         ys = self.r.shape[1]
@@ -61,7 +65,7 @@ class ImagePartition(object):
 
         self.balRGB = np.uint8(balRGB)
 
-    def reshape_image(self, cap_limit, lower_limit):
+    def reshape_image(self, td=100, cap_limit=2200, lower_limit=200):
         """Shrink the image size for follow-up operation."""
 
         self.b, self.g, self.r = cv2.split(self.balRGB)
@@ -75,12 +79,12 @@ class ImagePartition(object):
 
         # 高亮像素计数圈数字位置法
         vhigh = V.copy()
-        vhigh[np.where(V < 100)] = 0
+        vhigh[np.where(V < td)] = 0
         row_sum = np.sum(vhigh, axis=1)
         col_sum = np.sum(vhigh, axis=0)
 
-        row_bd = np.where(row_sum > 2200)[0]
-        col_bd = np.where(col_sum > 200)[0]
+        row_bd = np.where(row_sum > cap_limit)[0]
+        col_bd = np.where(col_sum > lower_limit)[0]
 
         cps = 2
         vlow = V.copy()
@@ -127,7 +131,7 @@ class ImagePartition(object):
         self.gray = cv2.cvtColor(histRBG, cv2.COLOR_BGR2GRAY)
 
         # 边缘检测部分
-        gaussGray = cv2.GaussianBlur(gray, (5, 5), 5)
+        gaussGray = cv2.GaussianBlur(self.gray, (5, 5), 5)
         # gaussGray = gray
         lapGray = cv2.Laplacian(gaussGray, cv2.CV_64F, ksize=3)
         lapGray = np.uint8(lapGray)
@@ -167,6 +171,8 @@ class ImagePartition(object):
         rdt = 1
         self.grayline1 = self.gray[0:row_bd2 + rdt + 1, :]
         self.grayline2 = self.gray[row_bd2 - rdt:, :]
+        self.grayline1od = self.grayline1.copy()
+        self.grayline2od = self.grayline2.copy()
 
         self.resultRGB1 = self.resultRGB[0:row_bd2 + rdt + 1, :]
         self.resultRGB2 = self.resultRGB[row_bd2 - rdt:, :]
@@ -186,8 +192,139 @@ class ImagePartition(object):
             fpx = ppx
         return np.uint8(HistV)
 
-    def image_part_hist(self):
+    def image_part_hist_withpeaks(self, shd=170):
+        """ """
+        # shd = 170
+
+        grayline1hd = self.grayline1.copy()
+        grayline2hd = self.grayline2.copy()
+        grayline1hd[np.where(self.grayline1 < shd)] //= 2
+        grayline2hd[np.where(self.grayline2 < shd)] //= 2
+        col_sum_line1 = np.sum(grayline1hd, axis=0)
+        col_sum_line2 = np.sum(grayline2hd, axis=0)
+
+        # 滤波
+        ksize = 3
+        col_sum_line1 = signal.medfilt(col_sum_line1, ksize)
+        col_sum_line2 = signal.medfilt(col_sum_line2, ksize)
+
+        col_sum_line1d = np.max(col_sum_line1) - col_sum_line1
+        col_sum_line2d = np.max(col_sum_line2) - col_sum_line2
+        # plt.plot(col_sum_line1d,'r')
+
+        peaks_line1 = signal.find_peaks_cwt(col_sum_line1d, np.arange(1, 40))
+        peaks_line2 = signal.find_peaks_cwt(col_sum_line2d, np.arange(1, 40))
+
+        # peaks_line1 = detect_peaks.detect_peaks(col_sum_line1d, mph=300, mpd=3, threshold=10)
+        # peaks_line2 = detect_peaks.detect_peaks(col_sum_line2d, mph=300, mpd=3, threshold=10)
+
+        peaks_line1 = np.concatenate((np.array([0]), peaks_line1, np.array([len(col_sum_line1d)])), axis=0)
+        peaks_line2 = np.concatenate((np.array([0]), peaks_line2, np.array([len(col_sum_line2d)])), axis=0)
+
+        print('第二次局部均衡分界点：')
+        print(peaks_line1)
+        print(peaks_line2)
+
+        self.grayline1 = self.part_hist(self.grayline1, peaks_line1)
+        self.grayline2 = self.part_hist(self.grayline2, peaks_line2)
+
+        self.grayline1 = cv2.medianBlur(self.grayline1, 3)
+        self.grayline2 = cv2.medianBlur(self.grayline2, 3)
+
+        cv2.imshow('grayline1 part hist', self.grayline1)
+        cv2.imshow('grayline2 part hist', self.grayline2)
+
+    @classmethod
+    def meanfilt(cls, line, ksize):
+        bias = ksize // 2
+        nline = []
+        for i in range(bias):
+            nline.append(line[i])
+        window = sum(line[:ksize])
+        for i, n in enumerate(line):
+            if i > bias - 1 and i < len(line) - bias:
+                nline.append(window)
+                window -= line[i - bias]
+                window += line[i + bias]
+        for i in range(bias):
+            j = i - bias
+            nline.append(line[j])
+
+        return nline
+
+    def get_image_peaks(self, shd=160, ksize=3):
+        grayline1hd = self.grayline1.copy()
+        grayline2hd = self.grayline2.copy()
+        grayline1hd[np.where(self.grayline1 < shd)] //= 2
+        grayline2hd[np.where(self.grayline2 < shd)] //= 2
+        col_sum_line1 = np.sum(grayline1hd, axis=0)
+        col_sum_line2 = np.sum(grayline2hd, axis=0)
+
+        # 滤波
+        # ksize = 3
+        # col_sum_line1 = signal.medfilt(col_sum_line1, ksize)
+        # col_sum_line2 = signal.medfilt(col_sum_line2, ksize)
+
+        col_sum_line1 = self.meanfilt(col_sum_line1, ksize)
+        col_sum_line2 = self.meanfilt(col_sum_line2, ksize)
+
+        col_sum_line1d = np.max(col_sum_line1) - col_sum_line1
+        col_sum_line2d = np.max(col_sum_line2) - col_sum_line2
+        # plt.plot(col_sum_line1d,'r')
+
+        # peaks_line1 = signal.find_peaks_cwt(col_sum_line1d, np.arange(1, 9))
+        # peaks_line2 = signal.find_peaks_cwt(col_sum_line2d, np.arange(1, 9))
+        #
+        peaks_line1 = detect_peaks.detect_peaks(col_sum_line1d, mph=300, mpd=5, threshold=0)
+        peaks_line2 = detect_peaks.detect_peaks(col_sum_line2d, mph=300, mpd=5, threshold=0)
+
+        peaks_line1 = np.concatenate((np.array([0]), peaks_line1, np.array([len(col_sum_line1d) - 1])), axis=0)
+        peaks_line2 = np.concatenate((np.array([0]), peaks_line2, np.array([len(col_sum_line2d) - 1])), axis=0)
+
+        print('尺寸确认：')
+        print(self.grayline1.shape)
+        print(col_sum_line1d.shape)
+        print(self.grayline2.shape)
+        print(col_sum_line2d.shape)
+
+        print('原始分界点：')
+        print(peaks_line1)
+        print(peaks_line2)
+
+        cv2.imshow('size confirm grayline1', self.grayline1)
+        cv2.imshow('size confirm grayline2', self.grayline2)
+        # peaks_high1 = col_sum_line1d[peaks_line1]
+        # peaks_high2 = col_sum_line1d[peaks_line2]
+
+        peaks_diff1 = np.diff(peaks_line1)
+        peaks_diff2 = np.diff(peaks_line2)
+
+    def aaa(self):
         pass
+
+    def partition_operate(self):
+        """Default operrate of image partition."""
+
+        self.white_balance()
+        self.reshape_image()
+        self.split_lines()
+        self.image_part_hist_withpeaks()
+        self.get_image_peaks()
+
+
+
+
+if __name__ == '__main__':
+    # Input image
+    bann = '000003'
+    src = "./extract/{}.jpg".format(bann)
+    RGB = cv2.imread(src)
+
+    # make image patition
+    partition = ImagePartition(RGB)
+    partition.partition_operate()
+
+
 
 
 
