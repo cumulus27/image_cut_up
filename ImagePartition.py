@@ -386,13 +386,13 @@ class MouldDetect(object):
         for fd, pd in zip(loc_f2, loc_p2):
             dead_range.append((fd, pd))
 
-        for x, y in zip(loc_f2, loc_p2):
-            cv2.rectangle(gray, (x, 1), (y, 1 + gray.shape[0] - 2), 255, 2)
-
-        plt.imshow(gray, cmap="gray")
-        plt.title('Combine Result'), plt.xticks([]), plt.yticks([])
-
-        plt.show()
+        # for x, y in zip(loc_f2, loc_p2):
+        #     cv2.rectangle(gray, (x, 1), (y, 1 + gray.shape[0] - 2), 255, 2)
+        #
+        # plt.imshow(gray, cmap="gray")
+        # plt.title('Combine Result'), plt.xticks([]), plt.yticks([])
+        #
+        # plt.show()
 
         return dead_range
 
@@ -1657,42 +1657,42 @@ class ImagePartition(object):
             name += 1
 
     @classmethod
-    def write_result_all(cls, first, line_result, resultRGB, line):
+    def write_result_all(cls, first, line_result, resultRGB, line, src, bann):
         point = first
         name = 1
         fat = 2
 
-        if not os.path.exists("./result/all/".format(bann)):
-            os.makedirs("./result/all/".format(bann))
+        if not os.path.exists(src.format(bann)):
+            os.makedirs(src.format(bann))
         for i in line_result:
             sigleim = resultRGB[:, max(point - fat, 0):min(point + i + fat, resultRGB.shape[1] - 1)]
-            cv2.imwrite("./result/all/{}_{}sigle{}.jpg".format(bann, line, name), sigleim,
+            cv2.imwrite(src+"{}_{}sigle{}.jpg".format(bann, line, name), sigleim,
                         [int(cv2.IMWRITE_JPEG_QUALITY), 100])
             point += i
             name += 1
 
     @classmethod
-    def write_result_split(cls, first, line_result, resultRGB, line):
+    def write_result_split(cls, first, line_result, resultRGB, line, src, bann):
         point = first
         name = 1
         fat = 2
 
-        if not os.path.exists("./result/{}".format(bann)):
-            os.makedirs("./result/{}".format(bann))
+        if not os.path.exists(src+"{}".format(bann)):
+            os.makedirs(src+"{}".format(bann))
         for i in line_result:
             sigleim = resultRGB[:, max(point - fat, 0):min(point + i + fat, resultRGB.shape[1] - 1)]
-            cv2.imwrite("./result/{}/{}sigle{}.jpg".format(bann, line, name), sigleim,
+            cv2.imwrite(src+"{}/{}sigle{}.jpg".format(bann, line, name), sigleim,
                         [int(cv2.IMWRITE_JPEG_QUALITY), 100])
             point += i
             name += 1
 
-    def write_image_split(self):
-        self.write_result_split(self.peaks_line1[0], self.line1_result, self.resultRGB1, 1)
-        self.write_result_split(self.peaks_line2[0], self.line2_result, self.resultRGB2, 2)
+    def write_image_split(self, src, bann):
+        self.write_result_split(self.peaks_line1[0], self.line1_result, self.resultRGB1, 1, src, bann)
+        self.write_result_split(self.peaks_line2[0], self.line2_result, self.resultRGB2, 2, src, bann)
 
-    def write_image_all(self):
-        self.write_result_all(self.peaks_line1[0], self.line1_result, self.resultRGB1, 1)
-        self.write_result_all(self.peaks_line2[0], self.line2_result, self.resultRGB2, 2)
+    def write_image_all(self, src, bann):
+        self.write_result_all(self.peaks_line1[0], self.line1_result, self.resultRGB1, 1, src, bann)
+        self.write_result_all(self.peaks_line2[0], self.line2_result, self.resultRGB2, 2, src, bann)
 
     def show_image_result(self):
         self.show_result(self.peaks_line1[0], self.line1_result, self.resultRGB1, 1)
