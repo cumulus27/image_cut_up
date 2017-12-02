@@ -9,8 +9,8 @@ from fastrotate import mser
 
 if __name__ == '__main__':
     # Input image
-    bann = '000340'
-    src = "./out/{}.jpg".format(bann)
+    bann = '000001'
+    src = "./out1/{}.jpg".format(bann)
     if os.path.exists(src):
         RGB = cv2.imread(src)
     else:
@@ -24,7 +24,7 @@ if __name__ == '__main__':
     ms.kmeans()
     ms.mser()
     rot = ms.rotate()
-    cv2.imshow('旋转结果', rot)
+    cv2.imshow('rot result', rot)
 
     # make image patition
     RGB = rot

@@ -22,7 +22,9 @@ class MouldDetect(object):
 
     @classmethod
     def mould_detect(cls, img2, template, methods, weight):
+        # cv2.resize(template,)
         ww, hh = template.shape[::-1]
+        template = cv2.resize(template, (ww * 2, hh * 2), interpolation=cv2.INTER_AREA)
         img = img2.copy()
         imgf = img2.copy()
         method = eval(methods)
@@ -386,15 +388,15 @@ class MouldDetect(object):
         for fd, pd in zip(loc_f2, loc_p2):
             dead_range.append((fd, pd))
 
-        # for x, y in zip(loc_f2, loc_p2):
-        #     cv2.rectangle(gray, (x, 1), (y, 1 + gray.shape[0] - 2), 255, 2)
+        for x, y in zip(loc_f2, loc_p2):
+            cv2.rectangle(gray, (x, 1), (y, 1 + gray.shape[0] - 2), 255, 2)
         #
         # plt.imshow(gray, cmap="gray")
         # plt.title('Combine Result'), plt.xticks([]), plt.yticks([])
         #
         # plt.show()
 
-        return dead_range
+        return dead_range, gray
 
     def default_operate(self):
         """Default operate of mould detect."""
@@ -413,12 +415,12 @@ class MouldDetect(object):
         print(line_number_f)
         print(line_number_p)
 
-        dead_range = self.get_dead_range(line_number_sfns, line_number_spns, line_number_res, self.grayline)
+        dead_range, gray = self.get_dead_range(line_number_sfns, line_number_spns, line_number_res, self.grayline)
 
         print('得到排除点:')
         print(dead_range)
 
-        return line_number_sf, line_number_sp, dead_range
+        return line_number_sf, line_number_sp, dead_range, gray
 
 
 class ImagePartition(object):
@@ -1411,7 +1413,7 @@ class ImagePartition(object):
 
     @classmethod
     def handle_big_diff(cls, trust, peaks_diff, diff_status, mean_size, bias):
-        sl = mean_size - bias - 1
+        sl = mean_size - bias + 1
         ll = mean_size + bias
         i = 0
         for diff, status in zip(peaks_diff, diff_status):
@@ -1558,8 +1560,8 @@ class ImagePartition(object):
         # Mould detect.
         md1 = MouldDetect(self.grayline1)
         md2 = MouldDetect(self.grayline2)
-        line_number_sf1, line_number_sp1, dead_range1 = md1.default_operate()
-        line_number_sf2, line_number_sp2, dead_range2 = md2.default_operate()
+        line_number_sf1, line_number_sp1, dead_range1, self.grayline1md = md1.default_operate()
+        line_number_sf2, line_number_sp2, dead_range2, self.grayline2md = md2.default_operate()
 
         self.trust1 = self.merge_mould_result(self.peaks_line1, self.trust1, line_number_sf1, line_number_sp1, self.mean_size)
         self.trust2 = self.merge_mould_result(self.peaks_line2, self.trust2, line_number_sf2, line_number_sp2, self.mean_size)
@@ -1701,6 +1703,14 @@ class ImagePartition(object):
     def return_image_result(self):
         pass
 
+    def show_md_result(self):
+
+        plt.subplot(211), plt.imshow(self.grayline1md, cmap="gray")
+        plt.title('line1'), plt.xticks([]), plt.yticks([])
+        plt.subplot(212), plt.imshow(self.grayline2md, cmap="gray")
+        plt.title('line2'), plt.xticks([]), plt.yticks([])
+        plt.show()
+
 
 if __name__ == '__main__':
     # Input image
@@ -1711,6 +1721,7 @@ if __name__ == '__main__':
     # make image patition
     partition = ImagePartition(RGB)
     partition.partition_operate()
+    partition.show_md_result()
     partition.show_image_result()
 
     cv2.waitKey(0)

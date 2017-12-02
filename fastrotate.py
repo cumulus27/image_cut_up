@@ -1,6 +1,7 @@
 #!/usr/bin/python2
 # -*- coding: utf-8 -*
 
+
 import cv2
 from pylab import *
 import copy
@@ -9,9 +10,12 @@ class mser:
 
     def __init__(self, img, outpath=[]):
         # self.src = src
-        self.outpath = outpath
+        # self.outpath = outpath
         # self.img = cv2.imread(self.src)
-        self.img = img
+        self.img0 = img
+        hh = img.shape[0]
+        ww = img.shape[1]
+        self.img = cv2.resize(self.img0, (ww / 2, hh / 2), interpolation=cv2.INTER_AREA)
         self.gray = []
         self.str_gray = []
         self.regions = []
@@ -150,14 +154,14 @@ class mser:
         bool_best=np.uint8(bool_best)
         h_new = int(w * fabs(sin(radians(angle))) + h * fabs(cos(radians(angle))))
         w_new = int(h * fabs(sin(radians(angle))) + w * fabs(cos(radians(angle))))
-
+        center = (w, h)
         M = cv2.getRotationMatrix2D(center, -angle, 1.0)
-        M[0, 2] += (w_new - w) / 2
-        M[1, 2] += (h_new - h) / 2
-        rotated = cv2.warpAffine(self.img, M, (w_new, h_new), borderValue=(0))
+        M[0, 2] += (w_new - w)
+        M[1, 2] += (h_new - h)
+        rotated = cv2.warpAffine(self.img0, M, (w_new*2, h_new*2), borderValue=(0))
         rotated = np.uint8(rotated)
-        srot = np.zeros((h_new, w_new,3))
-        srot[h_new // 2 - swidth:h_new // 2 + 24, :,:] = 1
+        srot = np.zeros((h_new*2, w_new*2,3))
+        srot[h_new - swidth*2:h_new + 24*2, :,:] = 1
         srot=np.uint8(srot)
         self.rotated2=srot*rotated
         cv2.putText(rotated, "Angle: {:.2f} degrees".format(angle),
@@ -257,17 +261,19 @@ class mser:
 
 if __name__ == "__main__":
     # 这段是文件遍历
-    FindPath = '/home/yxt/py_coding/ciga_rec/out1/out1/'
-    SavePath = '/home/yxt/py_coding/ciga_rec/out1/extract/'
-    FileNames = os.listdir(FindPath)
-    for file_name in FileNames:
-        src = os.path.join(FindPath, file_name)
+    # FindPath = '/home/yxt/py_coding/ciga_rec/out1/out1/'
+    # SavePath = '/home/yxt/py_coding/ciga_rec/out1/extract/'
+    # FileNames = os.listdir(FindPath)
+    # for file_name in FileNames:
+    #     src = os.path.join(FindPath, file_name)
         # outpath = os.path.join(SavePath, file_name)
-        print(src)
+        # print(src)
 
     #这段是指定的图
-        # src = "/home/yxt/py_coding/ciga_rec/out1/out1/000723.jpg"
-        ms = mser(src)
+        bann = '000019'
+        src = "./out1/{}.jpg".format(bann)
+        img = cv2.imread(src)
+        ms = mser(img)
         ms.cvt2gray()
         ms.graystretch()
         ms.kmeans()
