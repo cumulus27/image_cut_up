@@ -31,6 +31,7 @@ if __name__ == '__main__':
     partition = ImagePartition(RGB)
     partition.partition_operate()
     partition.show_image_result()
+    # partition.show_md_result()
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()

@@ -19,12 +19,16 @@ class MouldDetect(object):
 
         self.grayline = image
         self.src = "./mould/"
+        self.ww = 0
 
     @classmethod
     def mould_detect(cls, img2, template, methods, weight):
         # cv2.resize(template,)
         ww, hh = template.shape[::-1]
         template = cv2.resize(template, (ww * 2, hh * 2), interpolation=cv2.INTER_AREA)
+        ww, hh = template.shape[::-1]
+        print('template size::')
+        print(template.shape)
         img = img2.copy()
         imgf = img2.copy()
         method = eval(methods)
@@ -60,7 +64,7 @@ class MouldDetect(object):
         loc_p2 = []
         res_re = []
 
-        bias = 3
+        bias = ww * 0.25
         for x, y in loc_choice:
             f = x
             p = x + ww
@@ -208,7 +212,8 @@ class MouldDetect(object):
             loc_p2 = []
             loc_res = []
 
-            bias = 3
+            # bias = ww * 0.25
+            bias = 5
             for k, f in enumerate(singlefs):
                 p = singleps[k]
                 v = res0s[k]
@@ -321,7 +326,7 @@ class MouldDetect(object):
         loc_p2 = []
         loc_res = []
 
-        bias = 3
+        bias = 5
         for k, f in enumerate(line_number_sfs):
             p = line_number_sps[k]
             v = ress[k]
@@ -560,9 +565,9 @@ class ImagePartition(object):
         cv2.imshow('sobely', sobely)
         # histGray = cv2.cvtColor(HistRGB,cv2.COLOR_BGR2GRAY)
         histGray = self.gray
-        lhGray = cv2.add(lapGray * 0.1, histGray * 0.9)
+        lhGray = cv2.add(lapGray * 0.5, histGray * 0.5)
         lhGray = np.uint8(lhGray)
-        cv2.imshow('lapGray', lapGray)
+        cv2.imshow('lapGrayp', lapGray)
         cv2.imshow('histGray', histGray)
         cv2.imshow('lhGray', lhGray)
 
@@ -571,7 +576,7 @@ class ImagePartition(object):
         # row_sum2 = np.sum(gray,axis=1)
         # row_diff2 = np.diff(np.int64(row_sum2))
         x0 = self.gray.shape[0] // 2
-        row_sump = row_sum2[x0 - 5:x0 + 6]
+        row_sump = row_sum2[x0 - 10:x0 + 10]
         row_bd2 = np.where(row_sum2 == np.min(row_sump))[0][0]  # 隐藏bug 万一有多个值
 
         l1h = row_bd2
@@ -581,7 +586,7 @@ class ImagePartition(object):
             row_bd2 = self.gray.shape[0] // 2
 
         # 截取第一行和第二行
-        rdt = 1
+        rdt = 3
         self.grayline1 = self.gray[0:row_bd2 + rdt + 1, :]
         self.grayline2 = self.gray[row_bd2 - rdt:, :]
         self.grayline1od = self.grayline1.copy()
@@ -784,14 +789,14 @@ class ImagePartition(object):
 
     @classmethod
     def get_distrubute_trust(cls, peaks_line, trust, peaks_diff, bd_diff, diff_status, mean_size):
-
+        bias = mean_size*0.25
         for i, line in enumerate(peaks_line):
             if i > 0 and i < len(peaks_line) - 1:
                 if diff_status[i - 1] == 1 and diff_status[i] == 1:
                     # 两边的分块都偏小 降低置信度
                     trust[i] -= 2
                     if i > 1 and diff_status[i - 2] == 1:
-                        if peaks_line[i + 1] - peaks_line[i - 2] > mean_size + 3:
+                        if peaks_line[i + 1] - peaks_line[i - 2] > mean_size + bias:
                             if bd_diff[i - 1] > bd_diff[i]:
                                 trust[i - 1] -= 4
                             else:
@@ -817,8 +822,8 @@ class ImagePartition(object):
     def get_peaks_status(self, mser_diff1, mser_diff2):
         """"""
         diff_queue = np.append(self.peaks_diff1, self.peaks_diff2)
-        diff_queue = diff_queue[np.where(diff_queue > 8)]
-        diff_queue = diff_queue[np.where(diff_queue < 16)]
+        diff_queue = diff_queue[np.where(diff_queue > 16)]
+        diff_queue = diff_queue[np.where(diff_queue < 30)]
 
         # 众数做参考值
         # counts = np.bincount(diff_queue)
@@ -834,10 +839,10 @@ class ImagePartition(object):
         # mean_size = np.median(diff_queue)
         self.mean_size = (np.mean(mser_diff1) + np.mean(mser_diff2)) / 2 + 2
 
-        if self.mean_size < 11:
-            self.mean_size = 11
-        elif self.mean_size > 13:
-            self.mean_size = 13
+        if self.mean_size < 22:
+            self.mean_size = 22
+        elif self.mean_size > 26:
+            self.mean_size = 26
 
         num = 16
         # mean_size = round(gray.shape[1]/num)
@@ -1179,7 +1184,8 @@ class ImagePartition(object):
 
     @classmethod
     def merge_mould_result(cls, peaks_line, trust, line_number_f, line_number_p, mean_size):
-        bias = 3
+        bias = mean_size * 0.25
+        biasp = mean_size * 0.3
         for singlef, singlep in zip(line_number_f, line_number_p):
             i = 0
             print(singlef)
@@ -1193,9 +1199,9 @@ class ImagePartition(object):
                     trust[j] += 18
                 elif line - singlef[i] > bias and singlep[i] - line > bias:
                     trust[j] -= 32
-                elif singlef[i] - line > bias + 1 and singlef[i] - line < mean_size - 4:
+                elif singlef[i] - line > bias + 1 and singlef[i] - line < mean_size - biasp:
                     trust[j] -= 8
-                elif line - singlef[i] > bias + 1 and line - singlep[i] < mean_size - 4:
+                elif line - singlef[i] > bias + 1 and line - singlep[i] < mean_size - biasp:
                     trust[j] -= 8
 
         return trust
@@ -1272,10 +1278,10 @@ class ImagePartition(object):
 
     @classmethod
     def add_new_peaks_line(cls, peaks_line, trust, col_sum_line, peaks_diff, dead_range, mean_size):
-
+        cl = mean_size * 1.8
         for j, line in enumerate(peaks_diff):
             count = 0
-            if j < len(peaks_diff) and peaks_diff[j] > mean_size * 1.6 and peaks_diff[j] > 20:
+            if j < len(peaks_diff) and peaks_diff[j] > mean_size * 1.6 and peaks_diff[j] > 40:
                 part_sum = col_sum_line[peaks_line[j]:peaks_line[j + 1]]
                 part_line = detect_peaks.detect_peaks(part_sum, mph=300, mpd=5, threshold=0)
                 print('找到超大块：')
@@ -1621,8 +1627,8 @@ class ImagePartition(object):
         self.line2_result = self.peaks_diff2[np.where(self.peaks_diff2 > 0)]
 
         diff_queue = np.append(self.peaks_diff1, self.peaks_diff2)
-        diff_queue = diff_queue[np.where(diff_queue > 8)]
-        diff_queue = diff_queue[np.where(diff_queue < 16)]
+        diff_queue = diff_queue[np.where(diff_queue > 16)]
+        diff_queue = diff_queue[np.where(diff_queue < 30)]
         self.mean_size = np.median(diff_queue)
         self.bias = self.mean_size * 0.2
         print('最新的平均宽度:')
