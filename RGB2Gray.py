@@ -9,7 +9,7 @@ from fastrotate import mser
 
 if __name__ == '__main__':
     # Input image
-    for i in range(799,932):
+    for i in range(773,932):
         bann = str(i + 1)
         while len(bann) < 6:
             bann = '0' + bann

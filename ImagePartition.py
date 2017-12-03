@@ -24,8 +24,8 @@ class MouldDetect(object):
     @classmethod
     def mould_detect(cls, img2, template, methods, weight):
         # cv2.resize(template,)
-        ww, hh = template.shape[::-1]
-        template = cv2.resize(template, (ww * 2, hh * 2), interpolation=cv2.INTER_AREA)
+        # ww, hh = template.shape[::-1]
+        # template = cv2.resize(template, (ww * 2, hh * 2), interpolation=cv2.INTER_AREA)
         ww, hh = template.shape[::-1]
         print('template size::')
         print(template.shape)
@@ -129,14 +129,15 @@ class MouldDetect(object):
         for x, y in loc_fc:
             loc_f2.append(x)
             loc_p2.append(x + ww)
-            cv2.rectangle(imgf, (x, 1), (x + ww, 1 + imgf.shape[0] - 2), 255, 2)
+            # cv2.rectangle(imgf, (x, 1), (x + ww, 1 + imgf.shape[0] - 2), 255, 2)
+            cv2.rectangle(imgf, (x, y), (x + ww, y + hh), 255, 2)
 
         print('去重之后的个数：')
         print(len(loc_f2))
         print(loc_f2)
         print(loc_p2)
 
-        '''
+        """
         plt.subplot(221), plt.imshow(img2, cmap="gray")
         plt.title('Original Image'), plt.xticks([]), plt.yticks([])
         plt.subplot(222), plt.imshow(template, cmap="gray")
@@ -151,11 +152,13 @@ class MouldDetect(object):
         plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
 
         plt.show()
-        '''
+        """
+
 
         return loc_f2, loc_p2, res_re
 
     def detect_number(self, img2, tempNum=['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'], tempWeight=[0.30, 0.18, 0.25, 0.25, 0.25, 0.25, 0.3, 0.2, 0.35, 0.3]):
+
 
         line_number_f = []
         line_number_p = []
@@ -164,13 +167,18 @@ class MouldDetect(object):
             line_number_f0 = []
             line_number_p0 = []
             line_number_res0 = []
-            template1 = cv2.imread("./mould/{}/001.jpg".format(num), 0)
-            template2 = cv2.imread("./mould/{}/002.jpg".format(num), 0)
-            template3 = cv2.imread("./mould/{}/003.jpg".format(num), 0)
-            template_list = ['template1', 'template2', 'template3']
-            methods = 'cv2.TM_SQDIFF_NORMED'
-            for temp in template_list:
-                template = eval(temp)
+            for i in range(12):
+                bann = str(i + 1)
+                while len(bann) < 5:
+                    bann = '0' + bann
+                print(bann)
+                methods = 'cv2.TM_SQDIFF_NORMED'
+                print("./mould/{}/{}.png".format(num, bann))
+                template = cv2.imread("./mould/{}/{}.png".format(num, bann))
+                print(template.shape)
+                template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
+                # cv2.imshow("temp", template)
+                # cv2.waitKey()
                 template = cv2.equalizeHist(template)  # 模板直方图均衡
                 print('当前数字：')
                 print(num)
@@ -412,8 +420,12 @@ class MouldDetect(object):
         # tempWeight = [0.25, 0.26, 0.28, 0.26]
         # tempNum = ['0','8']
         # tempNum = ['0', '1']
+        # tempNum = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+        # tempWeight = [0.30, 0.18, 0.25, 0.25, 0.25, 0.25, 0.3, 0.2, 0.35, 0.3]
+        tempNum = ['0', '5', '7']
+        tempWeight = [0.30, 0.30, 0.25]
 
-        line_number_f, line_number_p, res = self.detect_number(self.grayline)
+        line_number_f, line_number_p, res = self.detect_number(self.grayline, tempNum, tempWeight)
         line_number_sf, line_number_sp, line_number_sfns, line_number_spns, line_number_res = self.mould_result_filter(
             self.grayline, line_number_f, line_number_p, res)
         print('数字模板匹配结果：')
@@ -1564,6 +1576,7 @@ class ImagePartition(object):
         print(self.trust2)
 
         # Mould detect.
+
         md1 = MouldDetect(self.grayline1)
         md2 = MouldDetect(self.grayline2)
         line_number_sf1, line_number_sp1, dead_range1, self.grayline1md = md1.default_operate()
