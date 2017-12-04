@@ -15,7 +15,7 @@ class mser:
         self.img0 = img
         hh = img.shape[0]
         ww = img.shape[1]
-        self.img = cv2.resize(self.img0, (ww / 2, hh / 2), interpolation=cv2.INTER_AREA)
+        self.img = cv2.resize(self.img0, (ww // 2, hh // 2), interpolation=cv2.INTER_AREA)
         self.gray = []
         self.str_gray = []
         self.regions = []
