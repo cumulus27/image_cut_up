@@ -171,14 +171,16 @@ class MouldDetect(object):
                 bann = str(i + 1)
                 while len(bann) < 5:
                     bann = '0' + bann
-                print(bann)
+                # print(bann)
                 methods = 'cv2.TM_SQDIFF_NORMED'
-                print("./mould/{}/{}.png".format(num, bann))
+                # print("./mould/{}/{}.png".format(num, bann))
                 template = cv2.imread("./mould/{}/{}.png".format(num, bann))
                 print(template.shape)
+                print(img2.shape)
+                if img2.shape[0] < template.shape[0]:
+                    print("模板尺寸大于原图！！！")
+                    continue
                 template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
-                # cv2.imshow("temp", template)
-                # cv2.waitKey()
                 template = cv2.equalizeHist(template)  # 模板直方图均衡
                 print('当前数字：')
                 print(num)
@@ -594,11 +596,14 @@ class ImagePartition(object):
         l1h = row_bd2
         l2h = self.gray.shape[0] - l1h
 
-        if l1h / l2h > 0.65 or l2h / l1h > 0.65:
+        # if l1h / l2h > 0.65 or l2h / l1h > 0.65:
+        #     row_bd2 = self.gray.shape[0] // 2
+
+        if l1h < 36 or l2h < 36:
             row_bd2 = self.gray.shape[0] // 2
 
         # 截取第一行和第二行
-        rdt = 3
+        rdt = 2
         self.grayline1 = self.gray[0:row_bd2 + rdt + 1, :]
         self.grayline2 = self.gray[row_bd2 - rdt:, :]
         self.grayline1od = self.grayline1.copy()
@@ -1729,6 +1734,12 @@ class ImagePartition(object):
         plt.subplot(212), plt.imshow(self.grayline2md, cmap="gray")
         plt.title('line2'), plt.xticks([]), plt.yticks([])
         plt.show()
+
+    def user_edit(self):
+        self.white_balance()
+        self.reshape_image()
+        self.split_lines()
+        return self.resultRGB1, self.resultRGB2
 
 
 if __name__ == '__main__':
