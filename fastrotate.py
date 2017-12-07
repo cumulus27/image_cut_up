@@ -15,7 +15,7 @@ class mser:
         self.img0 = img
         hh = img.shape[0]
         ww = img.shape[1]
-        self.img = cv2.resize(self.img0, (ww / 2, hh / 2), interpolation=cv2.INTER_AREA)
+        self.img = cv2.resize(self.img0, (ww // 2, hh // 2), interpolation=cv2.INTER_AREA)
         self.gray = []
         self.str_gray = []
         self.regions = []
@@ -161,7 +161,7 @@ class mser:
         rotated = cv2.warpAffine(self.img0, M, (w_new*2, h_new*2), borderValue=(0))
         rotated = np.uint8(rotated)
         srot = np.zeros((h_new*2, w_new*2,3))
-        srot[h_new - swidth*2:h_new + 24*2, :,:] = 1
+        srot[h_new - 24*2:h_new + 24*2, :,:] = 1
         srot=np.uint8(srot)
         self.rotated2=srot*rotated
         cv2.putText(rotated, "Angle: {:.2f} degrees".format(angle),
@@ -270,7 +270,7 @@ if __name__ == "__main__":
         # print(src)
 
     #这段是指定的图
-        bann = '000019'
+        bann = '000889'
         src = "./out1/{}.jpg".format(bann)
         img = cv2.imread(src)
         ms = mser(img)

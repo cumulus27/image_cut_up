@@ -9,7 +9,7 @@ from fastrotate import mser
 
 if __name__ == '__main__':
     # Input image
-    bann = '000001'
+    bann = '000029'
     src = "./out1/{}.jpg".format(bann)
     if os.path.exists(src):
         RGB = cv2.imread(src)
@@ -31,7 +31,7 @@ if __name__ == '__main__':
     partition = ImagePartition(RGB)
     partition.partition_operate()
     partition.show_image_result()
-    # partition.show_md_result()
+    partition.show_md_result()
 
     cv2.waitKey(0)
     cv2.destroyAllWindows()

@@ -24,8 +24,8 @@ class MouldDetect(object):
     @classmethod
     def mould_detect(cls, img2, template, methods, weight):
         # cv2.resize(template,)
-        ww, hh = template.shape[::-1]
-        template = cv2.resize(template, (ww * 2, hh * 2), interpolation=cv2.INTER_AREA)
+        # ww, hh = template.shape[::-1]
+        # template = cv2.resize(template, (ww * 2, hh * 2), interpolation=cv2.INTER_AREA)
         ww, hh = template.shape[::-1]
         print('template size::')
         print(template.shape)
@@ -129,14 +129,15 @@ class MouldDetect(object):
         for x, y in loc_fc:
             loc_f2.append(x)
             loc_p2.append(x + ww)
-            cv2.rectangle(imgf, (x, 1), (x + ww, 1 + imgf.shape[0] - 2), 255, 2)
+            # cv2.rectangle(imgf, (x, 1), (x + ww, 1 + imgf.shape[0] - 2), 255, 2)
+            cv2.rectangle(imgf, (x, y), (x + ww, y + hh), 255, 2)
 
         print('去重之后的个数：')
         print(len(loc_f2))
         print(loc_f2)
         print(loc_p2)
 
-        '''
+        """
         plt.subplot(221), plt.imshow(img2, cmap="gray")
         plt.title('Original Image'), plt.xticks([]), plt.yticks([])
         plt.subplot(222), plt.imshow(template, cmap="gray")
@@ -151,11 +152,13 @@ class MouldDetect(object):
         plt.title('Detected Point'), plt.xticks([]), plt.yticks([])
 
         plt.show()
-        '''
+        """
+
 
         return loc_f2, loc_p2, res_re
 
-    def detect_number(self, img2, tempNum=['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'], tempWeight=[0.30, 0.18, 0.25, 0.25, 0.25, 0.25, 0.3, 0.2, 0.35, 0.3]):
+    def detect_number(self, img2, tempGS, tempNum=['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'], tempWeight=[0.30, 0.18, 0.25, 0.25, 0.25, 0.25, 0.3, 0.2, 0.35, 0.3]):
+
 
         line_number_f = []
         line_number_p = []
@@ -164,13 +167,21 @@ class MouldDetect(object):
             line_number_f0 = []
             line_number_p0 = []
             line_number_res0 = []
-            template1 = cv2.imread("./mould/{}/001.jpg".format(num), 0)
-            template2 = cv2.imread("./mould/{}/002.jpg".format(num), 0)
-            template3 = cv2.imread("./mould/{}/003.jpg".format(num), 0)
-            template_list = ['template1', 'template2', 'template3']
-            methods = 'cv2.TM_SQDIFF_NORMED'
-            for temp in template_list:
-                template = eval(temp)
+            n = int(num)
+            for i in range(tempGS[n]):
+                bann = str(i + 1)
+                while len(bann) < 5:
+                    bann = '0' + bann
+                # print(bann)
+                methods = 'cv2.TM_SQDIFF_NORMED'
+                # print("./mould/{}/{}.png".format(num, bann))
+                template = cv2.imread("/home/ad/dataset/moulds2/{}/{}.png".format(num, bann))
+                print(template.shape)
+                print(img2.shape)
+                if img2.shape[0] < template.shape[0]:
+                    print("模板尺寸大于原图！！！")
+                    continue
+                template = cv2.cvtColor(template, cv2.COLOR_BGR2GRAY)
                 template = cv2.equalizeHist(template)  # 模板直方图均衡
                 print('当前数字：')
                 print(num)
@@ -405,15 +416,20 @@ class MouldDetect(object):
 
     def default_operate(self):
         """Default operate of mould detect."""
-        # tempNum = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-        # tempWeight = [0.30, 0.18, 0.25, 0.25, 0.25, 0.25, 0.3, 0.2, 0.35, 0.3]
+        tempNum = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+        tempWeight = [0.30, 0.18, 0.25, 0.25, 0.25, 0.25, 0.3, 0.2, 0.35, 0.3]
+        tempGS = [26, 19, 20, 20, 20, 21, 52, 21, 45, 53]
         # tempWeight = [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2]
         # tempNum = ['0', '6', '8', '9']
         # tempWeight = [0.25, 0.26, 0.28, 0.26]
         # tempNum = ['0','8']
         # tempNum = ['0', '1']
+        # tempNum = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+        # tempWeight = [0.30, 0.18, 0.25, 0.25, 0.25, 0.25, 0.3, 0.2, 0.35, 0.3]
+        # tempNum = ['0', '5', '7']
+        # tempWeight = [0.30, 0.30, 0.25]
 
-        line_number_f, line_number_p, res = self.detect_number(self.grayline)
+        line_number_f, line_number_p, res = self.detect_number(self.grayline, tempGS, tempNum, tempWeight)
         line_number_sf, line_number_sp, line_number_sfns, line_number_spns, line_number_res = self.mould_result_filter(
             self.grayline, line_number_f, line_number_p, res)
         print('数字模板匹配结果：')
@@ -489,10 +505,10 @@ class ImagePartition(object):
         self.b, self.g, self.r = cv2.split(self.balRGB)
         fRGB = self.balRGB
         LAB = cv2.cvtColor(fRGB, cv2.COLOR_BGR2LAB)
-        cv2.imshow('LAB', LAB)
-        cv2.imshow('labL', LAB[:, :, 0])
+        # cv2.imshow('LAB', LAB)
+        # cv2.imshow('labL', LAB[:, :, 0])
         V = LAB[:, :, 0]
-        cv2.imshow('L', V)
+        # cv2.imshow('L', V)
         V = cv2.equalizeHist(V)
 
         # 高亮像素计数圈数字位置法
@@ -534,14 +550,14 @@ class ImagePartition(object):
         self.nbRGB = fRGB[row_f:row_l, col_f:col_l, :]
         self.resultRGB = self.RGB[row_f:row_l, col_f:col_l, :]
 
-        cv2.imshow('nbRGB', self.nbRGB)
+        # cv2.imshow('nbRGB', self.nbRGB)
 
     def split_lines(self):
         """Split the image into line1 and line2."""
 
         LAB = cv2.cvtColor(self.nbRGB, cv2.COLOR_BGR2LAB)
         V = LAB[:, :, 0]
-        cv2.imshow('L', V)
+        # cv2.imshow('L', V)
         # (h, w) = self.nbRGB.shape[:2]
         HistV = cv2.equalizeHist(V)
         LAB[:, :, 0] = HistV
@@ -554,22 +570,22 @@ class ImagePartition(object):
         lapGray = cv2.Laplacian(gaussGray, cv2.CV_64F, ksize=3)
         lapGray = np.uint8(lapGray)
         # lapGray = np.uint8(np.absolute(lapGray))
-        cv2.imshow('lapGray', lapGray)
+        # cv2.imshow('lapGray', lapGray)
 
         sobelx = cv2.Sobel(gaussGray, cv2.CV_64F, 1, 0, ksize=3)
         sobelx = np.uint8(sobelx)
-        cv2.imshow('sobelx', sobelx)
+        # cv2.imshow('sobelx', sobelx)
 
         sobely = cv2.Sobel(gaussGray, cv2.CV_64F, 0, 1, ksize=3)
         sobely = np.uint8(sobely)
-        cv2.imshow('sobely', sobely)
+        # cv2.imshow('sobely', sobely)
         # histGray = cv2.cvtColor(HistRGB,cv2.COLOR_BGR2GRAY)
         histGray = self.gray
         lhGray = cv2.add(lapGray * 0.5, histGray * 0.5)
         lhGray = np.uint8(lhGray)
-        cv2.imshow('lapGrayp', lapGray)
-        cv2.imshow('histGray', histGray)
-        cv2.imshow('lhGray', lhGray)
+        # cv2.imshow('lapGrayp', lapGray)
+        # cv2.imshow('histGray', histGray)
+        # cv2.imshow('lhGray', lhGray)
 
         row_sum2 = np.sum(lhGray, axis=1)
         # row_sum2 = np.sum(lapGray, axis=1)
@@ -582,11 +598,14 @@ class ImagePartition(object):
         l1h = row_bd2
         l2h = self.gray.shape[0] - l1h
 
-        if l1h / l2h > 0.65 or l2h / l1h > 0.65:
+        # if l1h / l2h > 0.65 or l2h / l1h > 0.65:
+        #     row_bd2 = self.gray.shape[0] // 2
+
+        if l1h < 36 or l2h < 36:
             row_bd2 = self.gray.shape[0] // 2
 
         # 截取第一行和第二行
-        rdt = 3
+        rdt = 2
         self.grayline1 = self.gray[0:row_bd2 + rdt + 1, :]
         self.grayline2 = self.gray[row_bd2 - rdt:, :]
         self.grayline1od = self.grayline1.copy()
@@ -595,8 +614,8 @@ class ImagePartition(object):
         self.resultRGB1 = self.resultRGB[0:row_bd2 + rdt + 1, :]
         self.resultRGB2 = self.resultRGB[row_bd2 - rdt:, :]
 
-        cv2.imshow('grayline1', self.grayline1)
-        cv2.imshow('grayline2', self.grayline2)
+        # cv2.imshow('grayline1', self.grayline1)
+        # cv2.imshow('grayline2', self.grayline2)
 
     @classmethod
     def part_hist(cls, grayline, peaks_line):
@@ -649,8 +668,8 @@ class ImagePartition(object):
         self.grayline1 = cv2.medianBlur(self.grayline1, 3)
         self.grayline2 = cv2.medianBlur(self.grayline2, 3)
 
-        cv2.imshow('grayline1 part hist', self.grayline1)
-        cv2.imshow('grayline2 part hist', self.grayline2)
+        # cv2.imshow('grayline1 part hist', self.grayline1)
+        # cv2.imshow('grayline2 part hist', self.grayline2)
 
     @classmethod
     def meanfilt(cls, line, ksize):
@@ -709,8 +728,8 @@ class ImagePartition(object):
         print(self.peaks_line1)
         print(self.peaks_line2)
 
-        cv2.imshow('size confirm grayline1', self.grayline1)
-        cv2.imshow('size confirm grayline2', self.grayline2)
+        # cv2.imshow('size confirm grayline1', self.grayline1)
+        # cv2.imshow('size confirm grayline2', self.grayline2)
         # peaks_high1 = col_sum_line1d[peaks_line1]
         # peaks_high2 = col_sum_line1d[peaks_line2]
 
@@ -1564,6 +1583,7 @@ class ImagePartition(object):
         print(self.trust2)
 
         # Mould detect.
+
         md1 = MouldDetect(self.grayline1)
         md2 = MouldDetect(self.grayline2)
         line_number_sf1, line_number_sp1, dead_range1, self.grayline1md = md1.default_operate()
@@ -1716,6 +1736,12 @@ class ImagePartition(object):
         plt.subplot(212), plt.imshow(self.grayline2md, cmap="gray")
         plt.title('line2'), plt.xticks([]), plt.yticks([])
         plt.show()
+
+    def user_edit(self):
+        self.white_balance()
+        self.reshape_image()
+        self.split_lines()
+        return self.resultRGB1, self.resultRGB2
 
 
 if __name__ == '__main__':
