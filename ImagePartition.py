@@ -505,10 +505,10 @@ class ImagePartition(object):
         self.b, self.g, self.r = cv2.split(self.balRGB)
         fRGB = self.balRGB
         LAB = cv2.cvtColor(fRGB, cv2.COLOR_BGR2LAB)
-        cv2.imshow('LAB', LAB)
-        cv2.imshow('labL', LAB[:, :, 0])
+        # cv2.imshow('LAB', LAB)
+        # cv2.imshow('labL', LAB[:, :, 0])
         V = LAB[:, :, 0]
-        cv2.imshow('L', V)
+        # cv2.imshow('L', V)
         V = cv2.equalizeHist(V)
 
         # 高亮像素计数圈数字位置法
@@ -550,14 +550,14 @@ class ImagePartition(object):
         self.nbRGB = fRGB[row_f:row_l, col_f:col_l, :]
         self.resultRGB = self.RGB[row_f:row_l, col_f:col_l, :]
 
-        cv2.imshow('nbRGB', self.nbRGB)
+        # cv2.imshow('nbRGB', self.nbRGB)
 
     def split_lines(self):
         """Split the image into line1 and line2."""
 
         LAB = cv2.cvtColor(self.nbRGB, cv2.COLOR_BGR2LAB)
         V = LAB[:, :, 0]
-        cv2.imshow('L', V)
+        # cv2.imshow('L', V)
         # (h, w) = self.nbRGB.shape[:2]
         HistV = cv2.equalizeHist(V)
         LAB[:, :, 0] = HistV
@@ -570,22 +570,22 @@ class ImagePartition(object):
         lapGray = cv2.Laplacian(gaussGray, cv2.CV_64F, ksize=3)
         lapGray = np.uint8(lapGray)
         # lapGray = np.uint8(np.absolute(lapGray))
-        cv2.imshow('lapGray', lapGray)
+        # cv2.imshow('lapGray', lapGray)
 
         sobelx = cv2.Sobel(gaussGray, cv2.CV_64F, 1, 0, ksize=3)
         sobelx = np.uint8(sobelx)
-        cv2.imshow('sobelx', sobelx)
+        # cv2.imshow('sobelx', sobelx)
 
         sobely = cv2.Sobel(gaussGray, cv2.CV_64F, 0, 1, ksize=3)
         sobely = np.uint8(sobely)
-        cv2.imshow('sobely', sobely)
+        # cv2.imshow('sobely', sobely)
         # histGray = cv2.cvtColor(HistRGB,cv2.COLOR_BGR2GRAY)
         histGray = self.gray
         lhGray = cv2.add(lapGray * 0.5, histGray * 0.5)
         lhGray = np.uint8(lhGray)
-        cv2.imshow('lapGrayp', lapGray)
-        cv2.imshow('histGray', histGray)
-        cv2.imshow('lhGray', lhGray)
+        # cv2.imshow('lapGrayp', lapGray)
+        # cv2.imshow('histGray', histGray)
+        # cv2.imshow('lhGray', lhGray)
 
         row_sum2 = np.sum(lhGray, axis=1)
         # row_sum2 = np.sum(lapGray, axis=1)
@@ -614,8 +614,8 @@ class ImagePartition(object):
         self.resultRGB1 = self.resultRGB[0:row_bd2 + rdt + 1, :]
         self.resultRGB2 = self.resultRGB[row_bd2 - rdt:, :]
 
-        cv2.imshow('grayline1', self.grayline1)
-        cv2.imshow('grayline2', self.grayline2)
+        # cv2.imshow('grayline1', self.grayline1)
+        # cv2.imshow('grayline2', self.grayline2)
 
     @classmethod
     def part_hist(cls, grayline, peaks_line):
@@ -668,8 +668,8 @@ class ImagePartition(object):
         self.grayline1 = cv2.medianBlur(self.grayline1, 3)
         self.grayline2 = cv2.medianBlur(self.grayline2, 3)
 
-        cv2.imshow('grayline1 part hist', self.grayline1)
-        cv2.imshow('grayline2 part hist', self.grayline2)
+        # cv2.imshow('grayline1 part hist', self.grayline1)
+        # cv2.imshow('grayline2 part hist', self.grayline2)
 
     @classmethod
     def meanfilt(cls, line, ksize):
@@ -728,8 +728,8 @@ class ImagePartition(object):
         print(self.peaks_line1)
         print(self.peaks_line2)
 
-        cv2.imshow('size confirm grayline1', self.grayline1)
-        cv2.imshow('size confirm grayline2', self.grayline2)
+        # cv2.imshow('size confirm grayline1', self.grayline1)
+        # cv2.imshow('size confirm grayline2', self.grayline2)
         # peaks_high1 = col_sum_line1d[peaks_line1]
         # peaks_high2 = col_sum_line1d[peaks_line2]
 

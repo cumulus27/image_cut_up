@@ -9,7 +9,7 @@ from fastrotate import mser
 
 if __name__ == '__main__':
     # Input image
-    for i in range(932):
+    for i in range(255,932):
         bann = str(i + 1)
         while len(bann) < 6:
             bann = '0' + bann
@@ -48,7 +48,7 @@ if __name__ == '__main__':
         cv2.destroyAllWindows()
         partition = ImagePartition(RGB)
         partition.partition_operate()
-        src = "/home/ad/dataset/result5_2/all_new/"
+        src = "/home/ad/dataset/result5_2p/all_new/"
         partition.write_image_all(src, bann)
 
 
