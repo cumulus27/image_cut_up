@@ -14,9 +14,27 @@ def detectInputKey():
     dev = InputDevice('/dev/input/event4')
     select([dev], [], [])
     for event in dev.read():
-        if event.value == 1  and event.code != 0:
-            print("Key: %s Status: %s" % (event.code, "pressed" if event.value else "release"))
+        if event.value == 0  and event.code != 0:
+            # print("Key: %s Status: %s" % (event.code, "pressed" if event.value else "release"))
             return event.code
+
+def getCurrentNumber(srcWrite):
+    sn = [0] * 10
+    for i in range(10):
+        for j in range(10000000):
+            snStr = str(j+1)
+            while len(snStr) < 8:
+                snStr = '0' + snStr
+            src = srcWrite + '{}/'.format(i) + snStr + '.jpg'
+            if os.path.exists(src):
+                continue
+            else:
+                sn[i] = j
+                break
+
+    print(sn)
+    return sn
+
 
 
 if __name__ == '__main__':
@@ -25,7 +43,8 @@ if __name__ == '__main__':
                79: 1, 80: 2, 81: 3, 75: 4, 76: 5, 77: 6, 71: 7, 72: 8, 73: 9, 96: 'pass',
                57: 'pass', 28: 'pass', 1: 'exit'}
     srcWrite = '/home/ad/dataset/samples/'
-    sn = [0]*10
+    # sn = [0]*10
+    sn = getCurrentNumber(srcWrite)
 
     for i in range(932):
         bann = str(i + 1)
@@ -42,7 +61,6 @@ if __name__ == '__main__':
                 if os.path.exists(src):
                     RGB = cv2.imread(src)
                 else:
-                    print('one line end.')
                     break
 
                 cv2.destroyAllWindows()
@@ -51,10 +69,9 @@ if __name__ == '__main__':
 
                 while True:
                     value = detectInputKey()
-
                     try:
                         decode = keyDict[value]
-                        print(decode)
+                        print("Key: %s Mean: %s" % (value, decode) )
                         break
                     except:
                         decode = None
