@@ -41,7 +41,7 @@ if __name__ == '__main__':
     # get image
     keyDict = {11: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8, 10: 9, 82: 0,
                79: 1, 80: 2, 81: 3, 75: 4, 76: 5, 77: 6, 71: 7, 72: 8, 73: 9, 96: 'pass',
-               57: 'pass', 28: 'pass', 1: 'exit', 83: 'del'}
+               57: 'pass', 28: 'pass', 1: 'exit', 83: 'del', 29: 'err', 97: 'err'}
     srcWrite = '/home/ad/dataset/result556/samplesN/'
     # sn = [0]*10
     # sn = getCurrentNumber(srcWrite)
@@ -85,6 +85,15 @@ if __name__ == '__main__':
                 elif decode == 'pass':
                     srcPath = srcWrite + 'pass/'
                     srcWrites = srcPath + filename+ '.jpg'
+                    print(srcWrites)
+                    if not os.path.exists(srcPath):
+                        os.makedirs(srcPath)
+                    cv2.imwrite(srcWrites, RGB,
+                                [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+                    os.remove(src)
+                elif decode == 'err':
+                    srcPath = srcWrite + 'err/'
+                    srcWrites = srcPath + filename + '.jpg'
                     print(srcWrites)
                     if not os.path.exists(srcPath):
                         os.makedirs(srcPath)
