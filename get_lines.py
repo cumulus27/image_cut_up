@@ -15,15 +15,25 @@ if __name__ == '__main__':
             bann = '0' + bann
 
         print(bann)
-        # src = "./out1/{}.jpg".format(bann)
+        # # src = "./out1/{}.jpg".format(bann)
+        # src = "/home/ad/dataset/outzheng5/{}.jpg".format(bann)
+        # if os.path.exists(src):
+        #     RGB = cv2.imread(src)
+        # else:
+        #     print('File not exists!!')
+        #     continue
+        #
+        # RGB = cv2.imread(src)
+
+        srcper = "/home/ad/dataset/outzheng5_rot/{}.jpg".format(bann)
         src = "/home/ad/dataset/outzheng5/{}.jpg".format(bann)
-        if os.path.exists(src):
+        if os.path.exists(srcper):
+            RGB = cv2.imread(srcper)
+        elif os.path.exists(src):
             RGB = cv2.imread(src)
         else:
             print('File not exists!!')
             continue
-
-        RGB = cv2.imread(src)
 
         if RGB.shape[0] > 200:
             print("Can't use!!")
@@ -46,7 +56,7 @@ if __name__ == '__main__':
         g1, g2 = partition.user_edit()
 
         # srcw = "./lines/"
-        srcw = "/home/ad/dataset/outlines5/".format(bann)
+        srcw = "/home/ad/dataset/outlines5_2/".format(bann)
         if not os.path.exists(srcw):
             os.makedirs(srcw)
         cv2.imwrite(srcw + "{}_line{}.jpg".format(bann, 1), g1,

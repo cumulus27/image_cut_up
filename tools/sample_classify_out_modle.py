@@ -41,7 +41,8 @@ if __name__ == '__main__':
     # get image
     keyDict = {11: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 6, 8: 7, 9: 8, 10: 9, 82: 0,
                79: 1, 80: 2, 81: 3, 75: 4, 76: 5, 77: 6, 71: 7, 72: 8, 73: 9, 96: 'pass',
-               57: 'pass', 28: 'pass', 1: 'exit', 83: 'del', 29: 'err', 97: 'err'}
+               57: 'pass', 28: 'pass', 1: 'exit', 83: 'del', 111: 'del', 78: 'err', 13: 'err',
+               109: 'skip', }
     srcWrite = '/home/ad/dataset/result556/samplesN/'
     # sn = [0]*10
     # sn = getCurrentNumber(srcWrite)
@@ -61,7 +62,7 @@ if __name__ == '__main__':
                 if os.path.exists(src):
                     RGB = cv2.imread(src)
                 else:
-                    break
+                    continue
 
                 cv2.destroyAllWindows()
                 cv2.imshow(filename, RGB)
@@ -79,7 +80,9 @@ if __name__ == '__main__':
                 if decode == 'exit':
                     sys.exit(0)
 
-                if decode == 'del':
+                if decode == 'skip':
+                    pass
+                elif decode == 'del':
                     os.remove(src)
                     continue
                 elif decode == 'pass':
