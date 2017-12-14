@@ -47,24 +47,30 @@ if __name__ == '__main__':
     # sn = [0]*10
     # sn = getCurrentNumber(srcWrite)
 
-    for i in range(932):
+    for i in range(123,932):
         bann = str(i + 1)
         while len(bann) < 6:
             bann = '0' + bann
 
-        srcper = "/home/ad/dataset/outzheng5_rot/{}.jpg".format(bann)
-        src = "/home/ad/dataset/outzheng5/{}.jpg".format(bann)
-        if os.path.exists(srcper):
-            RGB = cv2.imread(srcper)
-        elif os.path.exists(src):
+        # srcper = "/home/ad/dataset/outzheng5_rot/{}.jpg".format(bann)
+        # src = "/home/ad/dataset/outzheng5/{}.jpg".format(bann)
+        # if os.path.exists(srcper):
+        #     RGB = cv2.imread(srcper)
+        # elif os.path.exists(src):
+        #     RGB = cv2.imread(src)
+        # else:
+        #     print('File not exists!!')
+        #     continue
+        src = "/home/ad/dataset/20171213/test/{}.jpg".format(bann)
+        if os.path.exists(src):
             RGB = cv2.imread(src)
         else:
             print('File not exists!!')
             continue
 
-        if RGB.shape[0] > 200:
-            print("Can't use!!")
-            continue
+        # if RGB.shape[0] > 200:
+        #     print("Can't use!!")
+        #     continue
 
         src0 = '/home/ad/dataset/outlines5_2/'
         filename1 = bann + '_line1'
@@ -72,19 +78,21 @@ if __name__ == '__main__':
         filename2 = bann + '_line2'
         src2 = src0 + filename2 + '.jpg'
 
+        cv2.destroyAllWindows()
+        cv2.imshow('naive{}'.format(bann), RGB)
         if os.path.exists(src1):
             RGB1 = cv2.imread(src1)
+            cv2.imshow(filename1, RGB1)
         else:
-            break
+            pass
 
         if os.path.exists(src2):
             RGB2 = cv2.imread(src2)
+            cv2.imshow(filename2, RGB2)
         else:
-            break
+            pass
 
-        cv2.destroyAllWindows()
-        cv2.imshow(filename1, RGB1)
-        cv2.imshow(filename2, RGB2)
+
         cv2.waitKey()
 
         while True:
@@ -114,7 +122,7 @@ if __name__ == '__main__':
                         [int(cv2.IMWRITE_JPEG_QUALITY), 100])
             # os.remove(src)
         elif decode == 'err':
-            srcPath = srcWrite + 'select_/'
+            srcPath = srcWrite + 'select_plus/'
             srcWrites = srcPath + bann + '.jpg'
             print(srcWrites)
             if not os.path.exists(srcPath):
