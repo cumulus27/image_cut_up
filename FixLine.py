@@ -11,7 +11,6 @@ class FixLine(object):
 
     """
     def __init__(self, naive, img):
-        self.drawing = False
         self.x1, self.y1 = -1, -1
         self.x2, self.y2 = -1, -1
         self.naive_img = naive
@@ -41,7 +40,7 @@ class FixLine(object):
         cv2.namedWindow(filename)
         cv2.setMouseCallback(filename, self.draw_line)
 
-        while (1):
+        while True:
             cv2.imshow(filename, self.img)
             k = cv2.waitKey(2) & 0xFF
             # print(k)
@@ -64,5 +63,63 @@ if __name__ == '__main__':
 
     print((x1,y1))
     print((x2,y2))
+
+    point1 = np.array([x1, y1])
+    point2 = np.array([x2, y2])
+    ll = np.sqrt(np.sum(np.square(point1-point2)))
+    print(ll)
+
+    ww = ll / 4.5
+    wbias = int(ww // 2)
+    print(wbias)
+
+    rows, cols, channel = RGB.shape
+
+    rowsn = wbias * 2
+    colsn = int(ll) + 1
+
+    yy = y2 - y1
+    xx = x2 - x1
+
+    nb1x = (yy / ll) * wbias
+    nb1y = (-xx / ll) * wbias
+    nb2x = (-yy / ll) * wbias
+    nb2y = (xx / ll) * wbias
+
+    nb1 = np.array([nb1x, nb1y])
+    nb2 = np.array([nb2x, nb2y])
+    print(nb1)
+    print(nb2)
+
+    f1 = point1+nb1
+    f2 = point1+nb2
+    f3 = point2+nb1
+    print(f1)
+    print(f2)
+    print(f3)
+
+    print(max(0,f1[0]))
+    print(max(0,f1[1]))
+
+    f11 = np.array([max(0, f1[0]), max(0, f1[1])])
+    f22 = np.array([max(0, f2[0]), max(0, f2[1])])
+    f33 = np.array([max(0, f3[0]), max(0, f3[1])])
+    print(f11)
+    fs11 = np.array([max(0, -f1[0]), max(0, -f1[1])])
+    fs22 = np.array([max(0, -f2[0]), max(0, -f2[1])])
+    fs33 = np.array([max(0, -f3[0]), max(0, -f3[1])])
+    print(fs11)
+
+
+    # pts1 = np.float32([point1-nb1, point1-nb2, point2-nb1])
+    pts1 = np.float32([[13,272], [50, 334], [348, 18]])
+    # pts2 = np.float32([[0, 0], [rowsn, 0], [0, colsn]])
+    pts2 = np.float32([[0, 0], [0, rowsn], [colsn, 0]])
+
+    M = cv2.getAffineTransform(pts1, pts2)
+    dst = cv2.warpAffine(RGB, M, (colsn, rowsn))
+
+    cv2.imshow('fix',dst)
+    cv2.waitKey()
 
 
