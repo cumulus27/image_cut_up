@@ -74,6 +74,7 @@ if __name__ == '__main__':
     print(wbias)
 
     rows, cols, channel = RGB.shape
+    print((rows, cols))
 
     rowsn = wbias * 2
     colsn = int(ll) + 1
@@ -101,9 +102,9 @@ if __name__ == '__main__':
     print(max(0,f1[0]))
     print(max(0,f1[1]))
 
-    f11 = np.array([max(0, f1[0]), max(0, f1[1])])
-    f22 = np.array([max(0, f2[0]), max(0, f2[1])])
-    f33 = np.array([max(0, f3[0]), max(0, f3[1])])
+    f11 = np.array([max(max(0, f1[0]), min(cols, f1[0])), max(max(0, f1[1]), min(rows, f1[1]))])
+    f22 = np.array([max(max(0, f2[0]), min(cols, f2[0])), max(max(0, f2[1]), min(rows, f2[1]))])
+    f33 = np.array([max(max(0, f3[0]), min(cols, f3[0])), max(max(0, f3[1]), min(rows, f3[1]))])
     print(f11)
     fs11 = np.array([max(0, -f1[0]), max(0, -f1[1])])
     fs22 = np.array([max(0, -f2[0]), max(0, -f2[1])])
