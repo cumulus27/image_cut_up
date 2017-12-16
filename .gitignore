@@ -108,3 +108,5 @@ ENV/
 /result/
 .idea/
 test.py
+/out/
+/outzheng5/
