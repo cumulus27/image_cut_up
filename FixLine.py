@@ -47,11 +47,113 @@ class FixLine(object):
             if k == 13:
                 break
         cv2.destroyAllWindows()
+
+        print((self.x1, self.y1))
+        print((self.x2, self.y2))
+
         return self.x1, self.y1, self.x2, self.y2
 
+    def split_line(self, p1, p2, ckb=4.5):
+
+        if self.x1 == -1 and self.x2 == -1:
+            point1 = p1
+            point2 = p2
+
+            ll = np.sqrt(np.sum(np.square(point1 - point2)))
+            print(ll)
+
+            wbias = 64
+            print(wbias)
+
+        else:
+            point1 = np.array([self.x1, self.y1])
+            point2 = np.array([self.x2, self.y2])
+
+            ll = np.sqrt(np.sum(np.square(point1 - point2)))
+            print(ll)
+            ww = ll / ckb
+            wbias = int(ww // 2)
+            print(wbias)
+
+
+
+        rows, cols, channel = self.naive_img.shape
+        print((rows, cols))
+
+        rowsn = wbias * 2
+        colsn = int(ll) + 1
+
+        yy = self.y2 - self.y1
+        xx = self.x2 - self.x1
+
+        nb1x = (yy / ll) * wbias
+        nb1y = (-xx / ll) * wbias
+        nb2x = (-yy / ll) * wbias
+        nb2y = (xx / ll) * wbias
+
+        nb1 = np.array([nb1x, nb1y])
+        nb2 = np.array([nb2x, nb2y])
+        print(nb1)
+        print(nb2)
+
+        # f1 = point1+nb1
+        # f2 = point1+nb2
+        # f3 = point2+nb1
+        # print(f1)
+        # print(f2)
+        # print(f3)
+        #
+        # print(max(0,f1[0]))
+        # print(max(0,f1[1]))
+        #
+        # f11 = np.array([max(max(0, f1[0]), min(cols, f1[0])), max(max(0, f1[1]), min(rows, f1[1]))])
+        # f22 = np.array([max(max(0, f2[0]), min(cols, f2[0])), max(max(0, f2[1]), min(rows, f2[1]))])
+        # f33 = np.array([max(max(0, f3[0]), min(cols, f3[0])), max(max(0, f3[1]), min(rows, f3[1]))])
+        # print(f11)
+        # fs11 = np.array([max(0, -f1[0]), max(0, -f1[1])])
+        # fs22 = np.array([max(0, -f2[0]), max(0, -f2[1])])
+        # fs33 = np.array([max(0, -f3[0]), max(0, -f3[1])])
+        # print(fs11)
+
+        f11 = point1
+        f22 = point2
+        f33 = (point1 + point2) // 2 + nb1
+        if f33[0] < 0 and f33[1] < 0:
+            pass
+        elif f33[0] < 0:
+            pass
+        elif f33[1] < 0:
+            pass
+
+        print(f11)
+        print(f22)
+        print(f33)
+
+        print(colsn)
+        print(rowsn)
+
+        fs11 = np.array([0, wbias])
+        fs22 = np.array([colsn, wbias])
+        fs33 = np.array([colsn // 2, 0])
+        print(fs11)
+        print(fs22)
+        print(fs33)
+
+        pts1 = np.float32([f11, f22, f33])
+        pts2 = np.float32([fs11, fs22, fs33])
+
+        M = cv2.getAffineTransform(pts1, pts2)
+        dst = cv2.warpAffine(self.naive_img, M, (colsn, rowsn))
+
+        bias = 4
+        line1 = dst[:wbias + bias, :]
+        line2 = dst[wbias - bias:, :]
+
+        return dst, line1, line2
+
 if __name__ == '__main__':
-    bann = '000029'
-    src = "./out1/{}.jpg".format(bann)
+    bann = '000021'
+    src = "/home/ad/dataset/outzheng5/{}.jpg".format(bann)
     if os.path.exists(src):
         RGB = cv2.imread(src)
     else:
@@ -59,68 +161,15 @@ if __name__ == '__main__':
 
     fix = FixLine(RGB, RGB)
 
-    x1, y1, x2, y2 = fix.fix_line(bann)
-
-    print((x1,y1))
-    print((x2,y2))
-
-    point1 = np.array([x1, y1])
-    point2 = np.array([x2, y2])
-    ll = np.sqrt(np.sum(np.square(point1-point2)))
-    print(ll)
-
-    ww = ll / 4.5
-    wbias = int(ww // 2)
-    print(wbias)
-
-    rows, cols, channel = RGB.shape
-    print((rows, cols))
-
-    rowsn = wbias * 2
-    colsn = int(ll) + 1
-
-    yy = y2 - y1
-    xx = x2 - x1
-
-    nb1x = (yy / ll) * wbias
-    nb1y = (-xx / ll) * wbias
-    nb2x = (-yy / ll) * wbias
-    nb2y = (xx / ll) * wbias
-
-    nb1 = np.array([nb1x, nb1y])
-    nb2 = np.array([nb2x, nb2y])
-    print(nb1)
-    print(nb2)
-
-    f1 = point1+nb1
-    f2 = point1+nb2
-    f3 = point2+nb1
-    print(f1)
-    print(f2)
-    print(f3)
-
-    print(max(0,f1[0]))
-    print(max(0,f1[1]))
-
-    f11 = np.array([max(max(0, f1[0]), min(cols, f1[0])), max(max(0, f1[1]), min(rows, f1[1]))])
-    f22 = np.array([max(max(0, f2[0]), min(cols, f2[0])), max(max(0, f2[1]), min(rows, f2[1]))])
-    f33 = np.array([max(max(0, f3[0]), min(cols, f3[0])), max(max(0, f3[1]), min(rows, f3[1]))])
-    print(f11)
-    fs11 = np.array([max(0, -f1[0]), max(0, -f1[1])])
-    fs22 = np.array([max(0, -f2[0]), max(0, -f2[1])])
-    fs33 = np.array([max(0, -f3[0]), max(0, -f3[1])])
-    print(fs11)
+    fix.fix_line(bann)
+    p1 = p2 = np.array([-1, -1])
+    dst, line1, line2 = fix.split_line(p1, p2)
 
 
-    # pts1 = np.float32([point1-nb1, point1-nb2, point2-nb1])
-    pts1 = np.float32([[13,272], [50, 334], [348, 18]])
-    # pts2 = np.float32([[0, 0], [rowsn, 0], [0, colsn]])
-    pts2 = np.float32([[0, 0], [0, rowsn], [colsn, 0]])
-
-    M = cv2.getAffineTransform(pts1, pts2)
-    dst = cv2.warpAffine(RGB, M, (colsn, rowsn))
-
+    cv2.imshow('naive', RGB)
     cv2.imshow('fix',dst)
+    cv2.imshow('line1',line1)
+    cv2.imshow('line2',line2)
     cv2.waitKey()
 
 

@@ -6,6 +6,7 @@ import numpy as np
 import cv2
 from pylab import *
 from matplotlib import pyplot as plt
+from FixLine import FixLine
 
 
 def separate(img=[]):
@@ -81,12 +82,12 @@ def extrct(xn, yn, wmid, hmid, str_gray):
 
 if __name__ == '__main__':
 
-    for numb in range(915,933):
+    for numb in range(12,933):
         bann = str(numb + 1)
         while len(bann) < 6:
             bann = '0' + bann
         # print(bann)
-        src = "./outzheng5/{}.jpg".format(bann)
+        src = "/home/ad/dataset/outzheng5/{}.jpg".format(bann)
         print (src)
         # src="./outzheng5/000009.jpg"
         A=cv2.imread(src)
@@ -114,7 +115,8 @@ if __name__ == '__main__':
             xr_mid = (x_right1+x_right2)//2
             yr_mid = (y_right1+y_right2)//2
 
-            cv2.line(A, (xl_mid, (yl_mid+hmid//2)*2), (xr_mid, (yr_mid+hmid//2)*2), (0,255,0))
+            An = A.copy()
+            cv2.line(A, (xl_mid, (yl_mid+hmid//2)*2), (xr_mid, (yr_mid+hmid//2)*2), (0,255,0), 3)
             if xr_mid-xl_mid == 0:
                 xr_mid = xl_mid+0.01
             k = float(yr_mid-yl_mid)/float(xr_mid-xl_mid)
@@ -123,7 +125,23 @@ if __name__ == '__main__':
                     if i == int((j-xl_mid)*k+yl_mid+hmid//2):
                         # print(i,j)
                         A[i*2,j*2] = (0,0,255)
-            cv2.imshow('A', A)
-            cv2.waitKey()
+            # cv2.imshow('A', A)
+            # cv2.waitKey()
             extrct(x1, y1 ,wmid, hmid, gray)
             extrct(x2, y2, wmid, hmid, gray)
+
+
+            #
+            fix = FixLine(An, A)
+
+            fix.fix_line(bann)
+
+            p1 = np.array([x1, y1])
+            p2 = np.array([x2, y2])
+            dst, line1, line2 = fix.split_line(p1, p2)
+
+            cv2.imshow('naive', An)
+            cv2.imshow('fix', dst)
+            cv2.imshow('line1', line1)
+            cv2.imshow('line2', line2)
+            cv2.waitKey()
