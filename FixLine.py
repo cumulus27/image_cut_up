@@ -55,15 +55,24 @@ class FixLine(object):
 
     def split_line(self, p1, p2, ckb=4.5):
 
+        bias = 4
+
         if self.x1 == -1 and self.x2 == -1:
+
+            print('auto split!')
             point1 = p1
             point2 = p2
 
+            print(p1)
+            print(p2)
             ll = np.sqrt(np.sum(np.square(point1 - point2)))
             print(ll)
 
-            wbias = 64
+            wbias = 64 - bias
             print(wbias)
+
+            yy = p2[1] - p1[1]
+            xx = p2[0] - p1[0]
 
         else:
             point1 = np.array([self.x1, self.y1])
@@ -75,6 +84,9 @@ class FixLine(object):
             wbias = int(ww // 2)
             print(wbias)
 
+            yy = self.y2 - self.y1
+            xx = self.x2 - self.x1
+
 
 
         rows, cols, channel = self.naive_img.shape
@@ -83,8 +95,9 @@ class FixLine(object):
         rowsn = wbias * 2
         colsn = int(ll) + 1
 
-        yy = self.y2 - self.y1
-        xx = self.x2 - self.x1
+        print('yy and xx:')
+        print(yy)
+        print(xx)
 
         nb1x = (yy / ll) * wbias
         nb1y = (-xx / ll) * wbias
@@ -145,13 +158,15 @@ class FixLine(object):
         M = cv2.getAffineTransform(pts1, pts2)
         dst = cv2.warpAffine(self.naive_img, M, (colsn, rowsn))
 
-        bias = 4
+
         line1 = dst[:wbias + bias, :]
         line2 = dst[wbias - bias:, :]
-
+        print(line1.shape)
+        print(line2.shape)
         return dst, line1, line2
 
 if __name__ == '__main__':
+
     bann = '000021'
     src = "/home/ad/dataset/outzheng5/{}.jpg".format(bann)
     if os.path.exists(src):
@@ -171,5 +186,7 @@ if __name__ == '__main__':
     cv2.imshow('line1',line1)
     cv2.imshow('line2',line2)
     cv2.waitKey()
+
+
 
 
