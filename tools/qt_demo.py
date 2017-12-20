@@ -12,38 +12,50 @@
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
-from future_builtins import *
+
 
 import sys
-import time
 from PyQt5.QtCore import (QTime, QTimer, Qt)
 from PyQt5.QtWidgets import QApplication , QMainWindow, QLabel
-# from PyQt5.QtGui import (QApplication, QLabel)
+from PyQt5.QtGui import QImage
+from PyQt5.QtGui import QPixmap
+from number import *
+import cv2
+
+class MyWindow(QMainWindow, Ui_MainWindow):
+    def __init__(self, parent=None):
+        super(MyWindow, self).__init__(parent)
+        self.setupUi(self)
+
+    def show_picture(self, img, img0):
+        self.naive_img.setScaledContents(True)
+        self.ssd_img.setScaledContents(True)
+        self.naive_img.setPixmap(QPixmap.fromImage(img0))
+        self.ssd_img.setPixmap(QPixmap.fromImage(img))
 
 
-app = QApplication(sys.argv)
 
-try:
-    due = QTime.currentTime()
-    message = "Alert!"
-    if len(sys.argv) < 2:
-        raise ValueError
-    hours, mins = sys.argv[1].split(":")
-    due = QTime(int(hours), int(mins))
-    if not due.isValid():
-        raise ValueError
-    if len(sys.argv) > 2:
-        message = " ".join(sys.argv[2:])
-except ValueError:
-    message = "Usage: alert.pyw HH:MM [optional message]" # 24hr clock
 
-while QTime.currentTime() < due:
-    time.sleep(20) # 20 seconds
 
-label = QLabel("<font color=red size=72><b>{0}</b></font>"
-               .format(message))
-label.setWindowFlags(Qt.SplashScreen)
-label.show()
-QTimer.singleShot(60000, app.quit) # 1 minute
-app.exec_()
+if __name__ == '__main__':
 
+    bann = '000009'
+    src = "/home/py/dataset/outzheng5/{}.jpg".format(bann)
+    src0 = "/home/py/dataset/20171213/select/{}.jpg".format(bann)
+    print(src)
+    # src="./outzheng5/000009.jpg"
+    A = cv2.imread(src)
+    A0 = cv2.imread(src0)
+    # print(A.shape)
+
+    qimg = QImage(A.tostring(), A.shape[1], A.shape[0], QImage.Format_RGB888).rgbSwapped()
+    qimg0 = QImage(A0.tostring(), A0.shape[1], A0.shape[0], QImage.Format_RGB888).rgbSwapped()
+
+    # cv2.imshow('A', A)
+    # cv2.waitKey()
+    #
+    app = QApplication(sys.argv)
+    myWin = MyWindow()
+    myWin.show()
+    myWin.show_picture(qimg, qimg0)
+    sys.exit(app.exec_())
