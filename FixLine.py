@@ -92,9 +92,6 @@ class FixLine(object):
         rows, cols, channel = self.naive_img.shape
         print((rows, cols))
 
-        rowsn = wbias * 2
-        colsn = int(ll) + 1
-
         print('yy and xx:')
         print(yy)
         print(xx)
@@ -134,13 +131,19 @@ class FixLine(object):
         if f33[0] < 0 and f33[1] < 0:
             pass
         elif f33[0] < 0:
-            pass
+            dd = -f33[0]
+            dd * (-xx / yy)
+
         elif f33[1] < 0:
             pass
 
         print(f11)
         print(f22)
         print(f33)
+
+
+        rowsn = wbias * 2
+        colsn = int(ll) + 1
 
         print(colsn)
         print(rowsn)

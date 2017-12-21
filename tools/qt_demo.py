@@ -40,8 +40,8 @@ class MyWindow(QMainWindow, Ui_MainWindow):
 if __name__ == '__main__':
 
     bann = '000009'
-    src = "/home/py/dataset/outzheng5/{}.jpg".format(bann)
-    src0 = "/home/py/dataset/20171213/select/{}.jpg".format(bann)
+    src = "/home/ad/dataset/outzheng5/{}.jpg".format(bann)
+    src0 = "/home/ad/dataset/20171213/select/{}.jpg".format(bann)
     print(src)
     # src="./outzheng5/000009.jpg"
     A = cv2.imread(src)
