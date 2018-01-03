@@ -67,6 +67,8 @@ if __name__ == '__main__':
                     except:
                         decode = None
 
+                cv2.destroyAllWindows()
+
                 if decode == 'exit':
                     sys.exit(0)
 
